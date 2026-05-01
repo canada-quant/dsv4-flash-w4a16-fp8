@@ -1,0 +1,24 @@
+--- /workspace/.venv-quant/lib/python3.13/site-packages/transformers/models/deepseek_v4/modeling_deepseek_v4.py.bak	2026-05-01 22:02:18.850979132 +0000
++++ /workspace/.venv-quant/lib/python3.13/site-packages/transformers/models/deepseek_v4/modeling_deepseek_v4.py	2026-05-01 22:02:18.864533083 +0000
+@@ -1177,12 +1177,18 @@
+         if (input_ids is None) ^ (inputs_embeds is not None):
+             raise ValueError("You must specify exactly one of input_ids or inputs_embeds")
+         return_cache = past_key_values if use_cache else None
+-        if past_key_values is None:
+-            past_key_values = DynamicCache(config=self.config)
++        # PATCH (paul/dsv4 calibration): when past_key_values is None we leave
++        # it None instead of auto-creating a generic DynamicCache. The autowrap
++        # framework registers V4 cache layers via LAYER_TYPE_CACHE_MAPPING but
++        # the V4-Flash config has layer_types=None, so DynamicCache(config=...)
++        # falls back to generic DynamicLayer which lacks store_compression_weights.
++        # With past_key_values=None, compressor.forward takes the cache_layer-is-None
++        # path (line 590-593 here) which does not require V4-specific layer methods.
++        # Original line: past_key_values = DynamicCache(config=self.config)
+         if inputs_embeds is None:
+             inputs_embeds = self.embed_tokens(input_ids)
+         if position_ids is None:
+-            past_seen = past_key_values.get_seq_length()
++            past_seen = past_key_values.get_seq_length() if past_key_values is not None else 0
+             position_ids = torch.arange(inputs_embeds.shape[1], device=inputs_embeds.device) + past_seen
+             position_ids = position_ids.unsqueeze(0)
+             # `generate()` may pass a per-layer-type mask dict already built by

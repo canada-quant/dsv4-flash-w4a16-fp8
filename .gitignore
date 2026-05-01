@@ -1,0 +1,25 @@
+# Never commit these
+*.pem
+*.key
+.env
+.env.*
+secrets*
+
+# Model artifacts (too large for GitHub; live on remote ephemeral NVMe / HF Hub)
+results/
+model-*/
+**/*.safetensors
+**/*.bin
+**/*.pt
+**/*.pth
+
+# Local caches
+__pycache__/
+*.pyc
+.cache/
+.DS_Store
+
+# Build artifacts
+*.egg-info/
+build/
+dist/

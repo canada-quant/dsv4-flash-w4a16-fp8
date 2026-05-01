@@ -1,0 +1,25 @@
+--- /workspace/llm-compressor-source/src/llmcompressor/pipelines/sequential/helpers.py.bak	2026-05-01 20:14:24.957931839 +0000
++++ /workspace/llm-compressor-source/src/llmcompressor/pipelines/sequential/helpers.py	2026-05-01 21:13:14.984989650 +0000
+@@ -203,8 +203,20 @@
+             kwargs = {k: self.create_arg(v) for k, v in a.to_dict().items()}
+             return self.create_node("call_function", a.__class__, (), kwargs)
+ 
+-        else:
+-            return super().create_arg(a)
++        # PATCH (paul/dsv4): transformers Cache (DynamicCache, OffloadedCache,
++        # HybridCache, EncoderDecoderCache, ...) is not natively encodable by fx.
++        # Same pattern as PretrainedConfig above: emit a fresh empty-constructor
++        # call so the traced graph produces a real cache instance at runtime.
++        # GPTQ hooks Linear inputs/outputs, so it does not need real cache state.
++        _tf_cache_cls = None
++        try:
++            from transformers.cache_utils import Cache as _tf_cache_cls
++        except ImportError:
++            pass
++        if _tf_cache_cls is not None and isinstance(a, _tf_cache_cls):
++            return self.create_node("call_function", a.__class__, (), {})
++
++        return super().create_arg(a)
+ 
+     def is_leaf_module(self, module: Module, module_qualified_name: str) -> bool:
+         # do not trace non-ancestors or modules with offloaded params
