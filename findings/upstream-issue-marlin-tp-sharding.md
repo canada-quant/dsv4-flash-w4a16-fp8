@@ -1,7 +1,9 @@
 # Upstream Issue: compressed-tensors W4A16 MoE TP scale-sharding bug
 
-This document is the paste-ready body for filing at:
-https://github.com/vllm-project/vllm/issues/new/choose → Bug Report
+**Filed as [vllm-project/vllm#41511](https://github.com/vllm-project/vllm/issues/41511) on May 2, 2026.**
+
+This document is the source of the issue body and the follow-up PR comment
+template for [vllm-project/vllm#40991](https://github.com/vllm-project/vllm/pull/40991).
 
 ---
 
@@ -204,7 +206,7 @@ Specifically:
 
 To be posted on https://github.com/vllm-project/vllm/pull/40991 after filing the issue:
 
-> Filing #XXXXX (compressed-tensors W4A16 MoE TP scale-sharding) as a separate issue since it's orthogonal to the SM12x sparse-MLA / indexer work in this PR. Hits on H200 SM90 too — not SM12x-specific. Verified on `428e08e` + PR #41276 cherry-pick; the 4 intervening commits to current HEAD `68901da` do not touch `compressed_tensors_moe_wna16_marlin.py`, so the bug is bit-identical on current HEAD by construction.
+> Filed [#41511](https://github.com/vllm-project/vllm/issues/41511) (compressed-tensors W4A16 MoE TP scale-sharding) as a separate issue since it's orthogonal to the SM12x sparse-MLA / indexer work in this PR. Hits on H200 SM90 too — not SM12x-specific. Verified on `428e08e` + PR #41276 cherry-pick; the 4 intervening commits to current HEAD `68901da` do not touch `compressed_tensors_moe_wna16_marlin.py`, so the bug is bit-identical on current HEAD by construction.
 >
 > Briefly: kylesayrs PR #41276 cherry-picked into ds4-sm120 cleanly, structural integration through `compressed_tensors_moe_wna16_marlin` works (model loads, weights resolve, packed_modules_mapping resolves fused_wqa_wkv/fused_wkv_wgate), but Marlin sees wrong `group_size` at TP>2 because `weight_scale` isn't sharded along K alongside the weight. TP=2 works (kernel's wrong-believed group_size=64 has a template, output mathematically correct, full harness coding 2/2 PASS). TP=8 crashes with `Invalid thread config`.
 >
@@ -218,7 +220,7 @@ To be posted on https://github.com/vllm-project/vllm/pull/40991 after filing the
 
 ## Crediting other contributions
 
-When the fix lands or the issue is filed, credit:
+When the fix lands, credit:
 - @jasl for SM12x-V4 base support (PR #40991)
 - @kylesayrs for compressed-tensors V4 attention path (PR #41276)
 - @bbbearxyz for SM12x Triton fallback kernels

@@ -37,7 +37,7 @@ recipe topology, swapping NVFP4 → W4A16 for SM 9.x / 12.x compatibility).
 | Path | What |
 |---|---|
 | `REPORT.md` | Full phase-by-phase mission log: setup, native baseline, dequant, calibration, vLLM serve attempts, harness results, decisions and pivots. The narrative of how the integration came together. |
-| `findings/upstream-issue-marlin-tp-sharding.md` | Root-cause analysis of a Marlin MoE kernel TP scale-sharding bug discovered during integration. Empirical TP=1/2/8 table, suggested fix location, paste-ready issue body for upstream filing. **Affects all compressed-tensors W4A16 MoE deployments under TP > 2 on every GPU architecture.** |
+| `findings/upstream-issue-marlin-tp-sharding.md` | Root-cause analysis of a Marlin MoE kernel TP scale-sharding bug discovered during integration. Empirical TP=1/2/8 table, suggested fix location, paste-ready issue body. **Filed upstream as [vllm-project/vllm#41511](https://github.com/vllm-project/vllm/issues/41511) on May 2, 2026.** Affects all compressed-tensors W4A16 MoE deployments under TP > 2 on every GPU architecture. |
 | `findings/kylesayrs-pr-41276-integration.md` | Five distinct integration gaps in vLLM PR #41276 and LLM Compressor PR #2647 documented end-to-end: weight-name remapping, `shared_experts.down_proj` save decomposition, `quantization_config.ignore` rewrite, BF16 attention NotImplementedError, and the `packed_modules_mapping` class attribute fix. |
 | `model-card-draft.md` | Working draft of the HF model card. Will become the README on `pastapaul/DeepSeek-V4-Flash-W4A16-FP8` once Phase 3b lands. |
 | `patches/` | Source patches with provenance: `helpers.py.diff` (llm-compressor Cache-class tracing fix), `modeling_deepseek_v4.py.diff` (transformers DynamicCache skip), `quantize_v4_w4a16.py.snapshot` (the recipe), `VERSIONS.md` (full reproduction checklist with package versions + repo HEADs). |
@@ -71,8 +71,8 @@ under W4A16 but fails under native).
 The SM120 coding 0/2 result was originally hypothesized to be reasoning-token
 exhaustion. The H200 result with the same harness defaults disproves that:
 **SM12x coding 0/2 is reproducibly an SM12x kernel correctness issue, not a
-reasoning-loop**. See `findings/upstream-issue-marlin-tp-sharding.md` and the
-PR comment template at the bottom of that doc.
+reasoning-loop**. See [vllm-project/vllm#41511](https://github.com/vllm-project/vllm/issues/41511)
+and `findings/upstream-issue-marlin-tp-sharding.md`.
 
 ## Reproduction
 
@@ -100,6 +100,7 @@ once Phase 3b verification completes.
 - [x] Phase 1 — Native FP4/FP8 baseline + harness
 - [x] Phase 2 — FP4/FP8 → BF16 dequantization
 - [x] Phase 3a — 16-sample dryrun calibration + vLLM serve at TP=2 + full harness
+- [x] File upstream Marlin TP scale-sharding bug — [#41511](https://github.com/vllm-project/vllm/issues/41511)
 - [ ] Phase 3b — 1024-sample full calibration *(in progress)*
 - [ ] Phase 4 — Verify Phase 3b artifact at TP=2 + delta vs dryrun
 - [ ] Phase 5 — HF upload + model card publication
@@ -107,8 +108,7 @@ once Phase 3b verification completes.
 
 ## Upstream contributions
 
-- **vLLM Marlin MoE TP scale-sharding bug** — *filed* (issue link will appear
-  here once posted). Affects all compressed-tensors W4A16 MoE under TP > 2.
+- **[vllm-project/vllm#41511](https://github.com/vllm-project/vllm/issues/41511)** — Marlin MoE TP scale-sharding bug filed May 2, 2026. Affects all compressed-tensors W4A16 MoE under TP > 2.
 - **PR #40991 reasoning-loop hypothesis disambiguation** — empirical
   comparison data (TP=2 same harness defaults: H200 W4A16 coding 2/2 PASS
   vs SM120 coding 0/2) posted as a comment on PR #40991.
