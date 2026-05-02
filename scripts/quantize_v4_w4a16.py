@@ -22,6 +22,7 @@ import os
 
 import torch
 from compressed_tensors.quantization.quant_scheme import (
+    FP8_BLOCK,
     W4A16,
     QuantizationScheme,
 )
@@ -118,26 +119,43 @@ def main():
 
     ds = ds.map(tokenize, remove_columns=ds.column_names)
 
-    print("[quant] configuring GPTQ W4A16 recipe...")
-    # Ignore patterns adapted from V3-family resolution (issue #1482):
-    #   - lm_head: never quantize the output head
-    #   - self_attn.*: V4's CSA/HCA attention is structurally a separate quant target;
-    #     leave it BF16 here (a follow-on FP8_BLOCK pass can target it later if needed).
-    #   - shared_experts.*: shared MLP — historically benefits from staying BF16.
-    # Routed experts are NOT ignored — those are the bulk of the model and the
-    # main W4A16 target.
+    print("[quant] configuring GPTQ mixed-precision recipe (FP8_BLOCK attn + W4A16 experts)...")
+    # REVISED 2026-05-02 (Path B): match RedHat's published reference structure.
+    #
+    # Earlier W4A16-everywhere recipe loaded into vLLM but broke at runtime:
+    # vllm/model_executor/layers/deepseek_v4_attention.py:418 hardcodes
+    # `wo_a_fp8 = self.wo_a.weight` then passes it to a custom FP8 BMM einsum
+    # kernel (`torch.ops.vllm.deepseek_v4_fp8_einsum`). This kernel only accepts
+    # FP8 tensors. With W4A16 wo_a, `.weight` doesn't exist (it's `.weight_packed`),
+    # and even if we re-aliased, the einsum kernel would reject int4 packed input.
+    #
+    # Path B keeps attn quantized in FP8_BLOCK (matching RedHat's NVFP4-FP8
+    # reference and the kernel path the kylesayrs PR was tested against), with
+    # W4A16 only on the routed experts (the bulk of the params). shared_experts
+    # stay BF16. This is the published-and-validated topology.
+    #
+    # Note: the model's transformers-v5 internal names use `self_attn.q_a_proj`
+    # etc. (NOT the post-rename `attn.wq_a` form). Recipe regexes target the
+    # transformers-v5 names since that's what llmcompressor sees during
+    # calibration. rewrite_for_vllm.py renames at the end.
     recipe = GPTQModifier(
         config_groups={
-            "default": QuantizationScheme(
-                targets=["Linear"],
+            "attention": QuantizationScheme(
+                targets=[
+                    r"re:.*self_attn\.(q_a_proj|q_b_proj|kv_proj|o_a_proj|o_b_proj)$",
+                    r"re:.*self_attn\.compressor\.(gate_proj|kv_proj)$",
+                    r"re:.*self_attn\.compressor\.indexer\.(gate_proj|kv_proj|q_b_proj|weights_proj)$",
+                ],
+                **FP8_BLOCK,
+            ),
+            "experts": QuantizationScheme(
+                targets=[
+                    r"re:.*mlp\.experts\.\d+\.(gate_proj|up_proj|down_proj)$",
+                ],
                 **W4A16,
             ),
         },
-        ignore=[
-            "lm_head",
-            "re:.*self_attn.*",
-            "re:.*shared_experts.*",
-        ],
+        ignore=["lm_head"],
         dampening_frac=0.1,
     )
 

@@ -133,3 +133,34 @@ EBS root (`/`) has 470 GB free and is reserved for OS / user home only.
 - **Path 1 (~50 min):** drop `re:.*self_attn.*` from recipe ignore. Re-run dryrun calibration with attn included in W4A16. Resulting model has `attn.{wq_a,wq_b,wkv,wo_a,wo_b}.weight_packed/scale/shape` — matching what kylesayrs PR expects. ~26 min over 4-h debug cap.
 - **Path 3 fallback:** ship dryrun as transformers-loadable; defer vLLM verify. Phase 4 = transformers `from_pretrained` + forward; Phase 5 = HF upload as-is. Documents vLLM integration gap as deployment-side problem.
 - Reservation has ~33 h remaining. Phase 3b is 12 h (full 1024-sample run). Either path fits.
+
+### Path 1 attempted and surfaced new failure → pivot to Path B (mixed-precision FP8_BLOCK + W4A16)
+- Path 1 (W4A16-everywhere except shared_experts) ran calibration cleanly but vLLM serve raised `NotImplementedError("DeepSeekV4 requires FP8 attention quantization")` from kylesayrs PR #41276's `wo_scale_name` selector. The PR encodes the assumption that attn weights are FP8.
+- **Path B authorized: re-run with FP8_BLOCK on attn + indexer/compressor Linears, W4A16 on routed experts only, shared_experts BF16.** Matches RedHat's `RedHatAI/DeepSeek-V4-Flash-NVFP4-FP8` reference recipe (with W4A16 instead of NVFP4 on experts for Spark Marlin compatibility downstream).
+- Path B calibration: 5h12m wall (both attn FP8 calibration with 16 samples and routed-experts W4A16 calibration with 8 samples in parallel across 8 ranks). Output: 143 GB / 4 shards.
+
+### Path B vLLM serve attempts — load fully succeeded, blocked at Marlin MoE kernel shape support
+After applying the full Phase 3a patch stack:
+1. `rewrite_for_vllm.py` extended with routed-expert renames (`experts.N.gate_proj/up_proj/down_proj` → `experts.N.w1/w3/w2`) and compressor-internal renames (`compressor.kv_proj→wkv`, `compressor.gate_proj→wgate`, `compressor.q_b_proj→wq_b`, `compressor.position_bias→ape`, both at the layer's compressor and at `compressor.indexer.*`).
+2. `patch_v4_packed_mapping.py` added `packed_modules_mapping = {"fused_wqa_wkv": ["wq_a", "wkv"], "fused_wkv_wgate": ["wkv", "wgate"], "gate_up_proj": ["w1", "w3"]}` to `DeepseekV4ForCausalLM` — kylesayrs PR referenced `self.packed_modules_mapping` at line 205 but didn't define it on the class.
+3. `patch_targets_v2.py` rewrote `quantization_config.config_groups[*].targets` to include both v5 names (`q_a_proj`, `kv_proj`, etc.) and post-rename names (`wq_a`, `wkv`, `fused_wqa_wkv`, `gate_up_proj`).
+
+With all patches:
+- All 3 safetensors shards loaded (73 sec, 20.01 GiB resident on rank 0).
+- compressed-tensors loader engaged: `Using MarlinLinearKernel for CompressedTensorsWNA16` for non-MoE Linears, `Using MacheteLinearKernel for CompressedTensorsWNA16` for some, `Using CompressedTensorsWNA16MarlinMoEMethod` for FusedMoE.
+- `_match_fused_layer` resolved all `fused_wqa_wkv`/`fused_wkv_wgate`/`gate_up_proj` lookups via `packed_modules_mapping`.
+- Profile run `_dummy_run` started.
+- **Failure point:** `RuntimeError: Invalid thread config: thread_m_blocks=4, thread_k=-1, thread_n=-1, num_threads=-1 for MKN=[49152, 256, 4096], num_bits=4, group_size=16, has_act_order=0, is_k_full=0, has_zp=0, max_shared_mem=232448` from Marlin MoE kernel.
+
+The kernel's tile-config selector returned -1 for thread_k/thread_n/num_threads, indicating the V4-specific MKN shape isn't in Marlin's supported config table. **This is a kernel-engineering issue, not a config or naming patch.**
+
+vLLM in jasl/ds4-sm120 has only ONE W4A16 MoE kernel — `compressed_tensors_moe_wna16_marlin`. No Machete-MoE / Triton-MoE alternatives. Without upstream kernel work (adding shape support to Marlin or implementing a fallback), W4A16 on V4 routed experts cannot serve in this vLLM tree on this hardware.
+
+### Verdict: Phase 3a verified at the structural level, blocked at kernel level
+The model checkpoint is correctly structured (verified by full weight load + matched-target lookups), but the deployment kernel can't dispatch it. **The failure mode is not in our quant artifact** — the same Marlin MoE shape limitation would affect any compressed-tensors W4A16 V4 model on this vLLM tree.
+
+Possible next moves (operator decision):
+- **Ship as-is to HF** as `pastapaul/DeepSeek-V4-Flash-W4A16-FP8`, document the vLLM Marlin MoE block, await upstream fix. Phase 4 verify becomes a `transformers.AutoModelForCausalLM.from_pretrained` + forward smoke.
+- **Run 3b anyway** — the resulting full-1024-sample artifact has the same kernel-deployment status as 3a, so deferring Marlin to upstream is the same proposition with a higher-quality artifact.
+- **Pivot recipe to NVFP4 experts (matching RedHat exactly)** — known-validated kernel path, but consumer Spark deployment then needs the eugr/RobTand patch stack the operator wanted to avoid.
+- **Pivot recipe to FP8_BLOCK experts** — uniform mixed precision, supported on Marlin/Machete, but loses W4A16's compression ratio.

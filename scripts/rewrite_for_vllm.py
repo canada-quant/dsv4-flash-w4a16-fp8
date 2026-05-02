@@ -91,6 +91,45 @@ def rename_key(key: str) -> str:
     key = key.replace(".shared_experts.up_proj.", ".shared_experts.w3.")
     key = key.replace(".shared_experts.down_proj.", ".shared_experts.w2.")
 
+    # Routed expert projection renames — same w1/w2/w3 convention.
+    # These are indexed: experts.{N}.gate_proj.{weight_packed,weight_scale,...}.
+    # vLLM's FusedMoE.make_expert_params_mapping enumerates patterns by w1/w2/w3
+    # name; without this rename the loader's expert_mapping never matches our
+    # gate_proj/up_proj/down_proj keys -> UnboundLocalError on name_mapped.
+    key = re.sub(r"\.experts\.(\d+)\.gate_proj\.", r".experts.\1.w1.", key)
+    key = re.sub(r"\.experts\.(\d+)\.up_proj\.", r".experts.\1.w3.", key)
+    key = re.sub(r"\.experts\.(\d+)\.down_proj\.", r".experts.\1.w2.", key)
+
+    # Compressor module renames (V4 MLA compressor + indexer-compressor).
+    # vLLM expects native short names: wkv, wgate, wq_b, ape (for position_bias).
+    # Applied AFTER mlp/experts renames so we don't accidentally hit .experts.N.gate_proj.
+    # These match both `attn.compressor.X` and `attn.compressor.indexer.X` paths;
+    # the kylesayrs indexer-rearrange rules at the top of this function then move
+    # `compressor.indexer.X` → `indexer.compressor.X` (or `indexer.X`) for the
+    # `wgate`/`wkv`/`wq_b`/`weights_proj`/`ape` cases. Order is fine because the
+    # kylesayrs rules ran on the input shape; we re-apply them at the end.
+    # Inner renames (the compressor's indexer): apply first so the kylesayrs
+    # rearrange below can match the canonical wgate/wkv/wq_b/ape names.
+    key = key.replace(".compressor.indexer.kv_proj.", ".compressor.indexer.wkv.")
+    key = key.replace(".compressor.indexer.gate_proj.", ".compressor.indexer.wgate.")
+    key = key.replace(".compressor.indexer.q_b_proj.", ".compressor.indexer.wq_b.")
+    key = key.replace(".compressor.indexer.position_bias", ".compressor.indexer.ape")
+
+    # Outer renames (the layer's compressor): apply AFTER inner so we don't
+    # accidentally double-rename `.compressor.indexer.gate_proj.` via the
+    # broader `.compressor.gate_proj.` rule (it wouldn't anyway because `.indexer.`
+    # is between them, but explicit ordering keeps the intent clear).
+    key = key.replace(".compressor.kv_proj.", ".compressor.wkv.")
+    key = key.replace(".compressor.gate_proj.", ".compressor.wgate.")
+    key = key.replace(".compressor.q_b_proj.", ".compressor.wq_b.")
+    key = key.replace(".compressor.position_bias", ".compressor.ape")
+
+    # Now apply kylesayrs indexer rearrange — moves compressor.indexer.{ape,wgate,wkv}
+    # to indexer.compressor.{ape,wgate,wkv}, and compressor.indexer.{weights_proj,wq_b}
+    # to indexer.{weights_proj,wq_b}.
+    key = re.sub(r"\.compressor\.indexer\.(ape|wgate|wkv)", r".indexer.compressor.\1", key)
+    key = re.sub(r"\.compressor\.indexer\.(weights_proj|wq_b)", r".indexer.\1", key)
+
     # Attention projection module renames (transformers V5 names -> native flat)
     # These appear under .attn. (post-rename); apply only inside that scope.
     key = re.sub(r"\.attn\.kv_proj\.", ".attn.wkv.", key)
