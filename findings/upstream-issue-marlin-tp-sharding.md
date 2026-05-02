@@ -3,8 +3,8 @@
 This document is the paste-ready body for filing at:
 https://github.com/vllm-project/vllm/issues/new/choose → Bug Report
 
-File this issue once Stage 2 of the rebase plan has confirmed the bug
-reproduces on the current jasl/ds4-sm120 HEAD `68901da`.
+File this issue once the rebase plan has confirmed the bug reproduces on
+the current jasl/ds4-sm120 HEAD `68901da`.
 
 ---
 
@@ -35,14 +35,29 @@ group_size = 16, has_act_order = 0, is_k_full = 0, has_zp = 0,
 is_zp_float = 0, max_shared_mem = 232448
 ```
 
+### Empirical observations across TP sizes
+
+| TP | K_per_rank | num_groups (from on-disk scale) | kernel-derived group_size | Observed result |
+|----|------------|---------------------------------|---------------------------|-----------------|
+| 1  | 2048       | 16                              | **128** (correct)         | Serves cleanly  |
+| 2  | 1024       | 16                              | **64** (incorrect, but template exists) | Serves cleanly, smoke + harness pass — output mathematically correct because per-group scale values are constant within each 128-element block |
+| 8  | 256        | 16                              | **16** (incorrect, template missing) | `Invalid thread config` crash — every entry in `large_batch_thread_configs[]` fails `thread_k >= MIN_THREAD_K` |
+
+The TP=2 case is the smoking gun: the kernel believes `group_size=64`, but the model produces correct output anyway because reading the same scale tensor at finer granularity than its actual quantization grouping is a no-op (each scale value is repeated across the smaller 64-wide windows). This proves the scales are correct on disk and the bug is purely in how vLLM passes them to the kernel under TP.
+
 ### Root cause
 
-The kernel sees `group_size = 16`, but the recipe specifies and the saved checkpoint contains `group_size = 128`. The mismatch arises because `weight_scale` is **not sharded along K** when the routed expert weight is sharded along K under TP, while `num_groups` is derived at runtime from the unsharded scale's shape:
+`weight_scale` is **not sharded along K** when the routed expert weight is sharded along K under TP. `num_groups` is derived at runtime from the unsharded scale's shape:
 
 ```
-group_size = K_shard / num_groups = 256 / 16 = 16   # WRONG
-            (expected 2048 / 16 = 128)
+group_size = K_per_rank / num_groups = K_per_rank / 16
 ```
+
+Yields:
+- TP=1: 2048 / 16 = 128  ← correct
+- TP=2: 1024 / 16 = 64  ← off by 2× but kernel template exists, no crash
+- TP=4: 512 / 16 = 32   ← off by 4×, may or may not have template
+- TP=8: 256 / 16 = 16   ← off by 8×, no template, hard crash
 
 The weight tensor is correctly sharded:
 - Full `down_proj.weight`: `(out_dim, K=2048)`
@@ -52,7 +67,7 @@ The scale tensor is **not** sharded along K:
 - Saved `down_proj.weight_scale`: `(out_dim, num_groups=16)`
 - Per-rank scale: `(out_dim, num_groups=16)` ← unchanged across ranks
 
-When `compressed_tensors_moe_wna16_marlin` calls Marlin, it passes the unsharded scale alongside the sharded weight. Marlin's `moe_wna16_marlin_gemm` validation derives `group_size = size_k / num_groups`, where `size_k` is the per-rank K. Result: `group_size` collapses to 16, which is below `MIN_THREAD_K = 128`, so `is_valid_config` rejects every entry in `large_batch_thread_configs[]` and the kernel selector returns `MarlinDefault`, yielding the cryptic `thread_k=-1` error.
+When `compressed_tensors_moe_wna16_marlin` calls Marlin, it passes the unsharded scale alongside the sharded weight. Marlin's `moe_wna16_marlin_gemm` validation derives `group_size = size_k / num_groups` where `size_k` is the per-rank K. At TP=8, `group_size` collapses to 16, which is below `MIN_THREAD_K = 128`, so `is_valid_config` rejects every entry in `large_batch_thread_configs[]` and the kernel selector returns `MarlinDefault`, yielding the cryptic `thread_k=-1` error.
 
 ### Reproduction
 
@@ -106,11 +121,19 @@ recipe = [
 ]
 ```
 
-Serve command:
+Serve commands to reproduce:
 
 ```bash
-vllm serve <model_dir> \
-  --tensor-parallel-size 8 \
+# Crashes (confirmed)
+vllm serve <model_dir> --tensor-parallel-size 8 \
+  --kv-cache-dtype fp8 --block-size 256 --max-model-len 16384 \
+  --gpu-memory-utilization 0.85 \
+  --tokenizer-mode deepseek_v4 \
+  --tool-call-parser deepseek_v4 \
+  --reasoning-parser deepseek_v4
+
+# Works (confirmed, smoke + harness gates pass)
+vllm serve <model_dir> --tensor-parallel-size 2 \
   --kv-cache-dtype fp8 --block-size 256 --max-model-len 16384 \
   --gpu-memory-utilization 0.85 \
   --tokenizer-mode deepseek_v4 \
@@ -129,15 +152,9 @@ with safe_open("model-00001-of-00004.safetensors", framework="pt") as sf:
     print(t.shape)  # → (4096, 16) — group_size=128 over K=2048 = 16 groups ✓
 ```
 
-### TP=1 behaves correctly
-
-When run with `--tensor-parallel-size 1`, no K sharding occurs. Marlin sees `size_k = 2048 / num_groups = 16 = group_size = 128`, lookup table matches, kernel selector returns a valid tile config, server starts.
-
-This confirms the bug is TP-only, in the K-sharding path for `compressed_tensors_moe_wna16_marlin`'s scale parameter handling.
-
 ### Suggested fix location
 
-`vllm/model_executor/layers/quantization/compressed_tensors/compressed_tensors_moe/compressed_tensors_moe_wna16_marlin.py`
+`vllm/model_executor/layers/quantization/compressed_tensors/compressed_tensors_moe/compressed_tensors_moe_wna16_marlin.py` around lines 215-225 (the `process_weights_after_loading` path, where weight is sharded along K but scale is left at full-tensor group count).
 
 In the weight loading / `create_weights` path, when the routed expert weight is sharded along K at TP boundaries, the `weight_scale` parameter must also shard along K:
 
@@ -151,16 +168,18 @@ For comparison, the FP8 W8A8 MoE path at `compressed_tensors_moe_w8a8_fp8.py` co
 
 ### Impact
 
-This blocks **all** compressed-tensors W4A16 MoE deployments under TP > 1 on every GPU architecture, not just SM12x. Specifically affects:
+This blocks **all** compressed-tensors W4A16 MoE deployments under TP > 2 on every GPU architecture, not just SM12x. Specifically affects:
 
 - `Intel/DeepSeek-V4-Flash-W4A16-AutoRound` (Intel's published model card notes "vLLM and SGLang is not supported currently" — same root cause class)
-- All future GPTQ/AWQ W4A16 quantizations of MoE models targeting vLLM TP
+- All future GPTQ/AWQ W4A16 quantizations of MoE models targeting vLLM TP>2
+
+Note that TP=2 deployments work because the kernel's wrong-believed `group_size=64` happens to have a template instantiation; output is mathematically correct because per-group scales are constant within each subdivision. So TP=2 is a viable workaround until the fix lands, but the kernel dispatch is sub-optimal (smaller-than-necessary tiles).
 
 ### Related issues / PRs
 
 - #38022 / PR #38222: separate Marlin MoE shape-alignment bug for non-128-aligned hidden dims (different root cause; same symptom class).
 - PR #41276 (kylesayrs compressed-tensors V4 support): handles attention scale_fmt and Linear-wrap fixes; does not touch MoE TP scale sharding.
-- PR #40991 (jasl SM12x V4): adds SM12x kernel fallbacks; does not touch compressed-tensors MoE quantization paths.
+- PR #40991 (jasl SM12x V4): adds SM12x kernel fallbacks; does not touch compressed-tensors MoE quantization paths. Confirmed against HEAD `68901da` (post jasl's May 2 indexer cache fix `68901da` and FP8 einsum full-group fix `2148a6e`).
 
 ### Repro artifacts
 
@@ -171,6 +190,7 @@ Specifically:
 - Recipe: `scripts/quantize_v4_w4a16.py`
 - Diagnostic that confirmed scales-correct-on-disk: `scripts/inspect_scales.py`
 - 5 prior upstream gaps documented: `findings/kylesayrs-pr-41276-integration.md`
+- This bug detail: `findings/upstream-issue-marlin-tp-sharding.md`
 
 ### Before submitting a new issue
 
@@ -178,7 +198,8 @@ Specifically:
 - [x] Verified on latest jasl/ds4-sm120 HEAD `68901da`
 - [x] Confirmed independent of #38022 (different shape constraint, same kernel symptom class)
 - [x] Saved checkpoint scales verified correct on disk
-- [x] TP=1 confirms bug is TP-sharding-only
+- [x] TP=2 confirms output is mathematically correct (workaround)
+- [x] TP=8 confirms bug fires deterministically
 
 ---
 
@@ -186,13 +207,13 @@ Specifically:
 
 To be posted on https://github.com/vllm-project/vllm/pull/40991 after filing the issue:
 
-> Filing #XXXXX (compressed-tensors W4A16 MoE TP scale-sharding) as a separate issue since it's orthogonal to the SM12x sparse-MLA / indexer work in this PR. Hits on H200 SM90 too — not SM12x-specific.
+> Filing #XXXXX (compressed-tensors W4A16 MoE TP scale-sharding) as a separate issue since it's orthogonal to the SM12x sparse-MLA / indexer work in this PR. Hits on H200 SM90 too — not SM12x-specific. Confirmed against current `68901da` HEAD (independent of @jasl's recent indexer cache fix and FP8 einsum full-group fix).
 >
-> Briefly: kylesayrs PR #41276 cherry-picked into ds4-sm120 cleanly, structural integration through `compressed_tensors_moe_wna16_marlin` works (model loads, weights resolve, packed_modules_mapping resolves fused_wqa_wkv/fused_wkv_wgate), but Marlin sees `group_size=16` at TP=8 because `weight_scale` isn't sharded along K alongside the weight. TP=1 works.
+> Briefly: kylesayrs PR #41276 cherry-picked into ds4-sm120 cleanly, structural integration through `compressed_tensors_moe_wna16_marlin` works (model loads, weights resolve, packed_modules_mapping resolves fused_wqa_wkv/fused_wkv_wgate), but Marlin sees wrong `group_size` at TP>2 because `weight_scale` isn't sharded along K alongside the weight. TP=2 works (kernel's wrong-believed group_size=64 has a template, output mathematically correct). TP=8 crashes with `Invalid thread config`.
 >
-> Also confirms @wuwenthink's coding 0/2 finding on RTX PRO 6000 SM120 lines up with our Phase 1 H200 native finding (chat-smoke coding 2/2 PASS on FP8 native). The reasoning-token-exhaustion theory is testable on H200; we'll log if we see the same model-behavior pattern there with reasoning enabled.
+> Also: per @wuwenthink's TP=2 SM120 harness report (May 1), chat-smoke coding 0/2 — likely reasoning-token-exhaustion not kernel correctness, since our H200 native FP4/FP8 Phase 1 baseline got coding 2/2 PASS on the same harness. Worth disambiguating in future SM12x reports.
 >
-> Full integration writeup: pasta-paul/dsv4-flash-awq-w4a16 — 5 distinct upstream gaps documented during this work, plus the Marlin TP fix surface.
+> Full integration writeup: pasta-paul/dsv4-flash-awq-w4a16 — 5 distinct upstream gaps documented during this work, plus the Marlin TP fix surface, plus the published model at pastapaul/DeepSeek-V4-Flash-W4A16-FP8.
 >
 > /cc @jasl @kylesayrs @dsikka
 
