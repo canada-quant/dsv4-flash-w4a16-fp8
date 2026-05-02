@@ -113,3 +113,23 @@ EBS root (`/`) has 470 GB free and is reserved for OS / user home only.
 - Calibration: `HuggingFaceH4/ultrachat_200k`, V4's manual chat encoding (BOS / `<｜User｜>` / `<｜Assistant｜>` / EOS). Sticking with kylesayrs's tested dataset + preprocessing rather than the brief's `bigcode/the-stack-smol` since that hasn't been validated against V4.
 - Recipe: `GPTQModifier(config_groups={"default": QuantizationScheme(targets=["Linear"], **W4A16)}, ignore=["lm_head"])`, `sequential_targets=["DeepseekV4DecoderLayer"]`, `batch_size=32`, `max_seq_len=512`.
 - **Dry-run launched 2026-05-01T18:57:56Z**, 16 samples, output `/workspace/model-w4a16-dryrun`. If dry-run succeeds, full run with 1024 samples; if W4A16 hits V4 edge cases, fall back to NVFP4+FP8_BLOCK (RedHat's exact recipe).
+
+### Phase 3a calibration — outcome
+- **Calibration succeeded** after 5 attempts of patching upstream rough edges in kylesayrs's PR #2647 (transformers-v5 branch of vllm-project/llm-compressor) and HF transformers PR #45643 (add-deepseek-v4 branch).
+- Patches landed (saved at `~/work/h200-quant/patches/`):
+  - `helpers.py.diff` — `SequentialTracer.create_arg` extension to handle `transformers.cache_utils.Cache` via empty-constructor call (mirroring the existing `PretrainedConfig` pattern). Without this, fx fails with `NotImplementedError: argument of type: <class 'DynamicCache'>`.
+  - `modeling_deepseek_v4.py.diff` — skip auto-DynamicCache creation in `DeepseekV4Model.forward`. Reason: V4-Flash config has `layer_types=None`, so `DynamicCache(config=...)` falls back to generic `DynamicLayer` which lacks `store_compression_weights`. With `past_key_values=None`, the compressor takes its no-cache fallback path.
+- `/dev/shm` resized to 1.8 TB (`sudo mount -o remount,size=1800G /dev/shm`); default 1 TB OOM'd `linearize_moe_model` at step 39/43.
+- Result: 147 GB output, 4 safetensors shards, 276 356 keys, ~7m save time. Calibration loop ran 16 samples × 44 layers in ~80 minutes wall.
+
+### Phase 3a vLLM verify — 9 serve attempts, final blocker
+- vLLM jasl/ds4-sm120 expects native flat key naming (`layers.X.attn.Y`, `hc_head_base`); kylesayrs save uses transformers-v5 nested names (`model.layers.X.self_attn.Y`, `model.hc_head.hc_base`). Bridged with `rewrite_for_vllm.py` (header rewrite + refusion of decomposed `shared_experts.down_proj` rows).
+- Diagnostic finding (operator-corrected from earlier "upstream bug" call): `shared_experts.down_proj.weight` is decomposed by transformers v5 save into `hidden_size=4096` separate `(moe_intermediate_size,) bf16` rows. Each row is one slice of the original 2D weight — recoverable by `torch.stack(rows, dim=0)`. Done in `rewrite_for_vllm.py`.
+- vLLM PR #41276 (kylesayrs `neuralmagic/vllm@kylesayrs/deepseek-ct`, commit `f910a73a93`) cherry-picked into jasl tree. Adds: defensive `scale_fmt` fallback, `wo_scale_name` selector (FP8 vs CT), Linear-wrapping of two raw `torch.mm` calls.
+- Config-side patches: `compress_ratios`, `num_hash_layers`, `qk_rope_head_dim`, `torch_dtype`, `rope_scaling` reinstated; `rope_parameters` removed; `quantization_config.ignore` rewritten to regex `[lm_head, re:.*attn.*, re:.*shared_experts.*]`.
+- **Final blocker:** kylesayrs PR #41276 raises `NotImplementedError("DeepSeekV4 requires FP8 attention quantization")` because our recipe ignored `self_attn` → attn weights are plain BF16 (`.weight` only, no `.weight_scale`/`.weight_scale_inv`). RedHat's reference NVFP4 model (`RedHatAI/DeepSeek-V4-Flash-NVFP4-FP8`) quantizes attn (FP8_BLOCK) — which is why theirs works.
+
+### Decision pending operator authorization (session paused 2026-05-02 01:37 UTC)
+- **Path 1 (~50 min):** drop `re:.*self_attn.*` from recipe ignore. Re-run dryrun calibration with attn included in W4A16. Resulting model has `attn.{wq_a,wq_b,wkv,wo_a,wo_b}.weight_packed/scale/shape` — matching what kylesayrs PR expects. ~26 min over 4-h debug cap.
+- **Path 3 fallback:** ship dryrun as transformers-loadable; defer vLLM verify. Phase 4 = transformers `from_pretrained` + forward; Phase 5 = HF upload as-is. Documents vLLM integration gap as deployment-side problem.
+- Reservation has ~33 h remaining. Phase 3b is 12 h (full 1024-sample run). Either path fits.
