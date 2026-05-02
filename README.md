@@ -9,8 +9,7 @@ the gaps between them.
 > serves cleanly at TP=2, full harness suite passes (chat-smoke quick 4/4,
 > quality 4/4, coding 2/2, toolcall15 25/30 = 83%) — beating the FP4/FP8
 > native baseline by +2 points on toolcall15. Phase 3b (1024-sample full
-> calibration) launching for the production artifact. HF upload pending
-> Phase 4 verify.
+> calibration) running. HF upload pending Phase 4 verify.
 
 ## Why this exists
 
@@ -72,7 +71,11 @@ The SM120 coding 0/2 result was originally hypothesized to be reasoning-token
 exhaustion. The H200 result with the same harness defaults disproves that:
 **SM12x coding 0/2 is reproducibly an SM12x kernel correctness issue, not a
 reasoning-loop**. See [vllm-project/vllm#41511](https://github.com/vllm-project/vllm/issues/41511)
-and `findings/upstream-issue-marlin-tp-sharding.md`.
+and `findings/upstream-issue-marlin-tp-sharding.md`. This hypothesis is
+corroborated by [@aabbccddwasd's May 2 finding on PR #40991](https://github.com/vllm-project/vllm/pull/40991#issuecomment-4363390262):
+an independent SM120 indexer KV cache layout-mismatch bug producing NaN
+logits in the 10^35 range, fixed by their patch and integrated into jasl's
+current HEAD `68901da`.
 
 ## Reproduction
 
@@ -101,6 +104,7 @@ once Phase 3b verification completes.
 - [x] Phase 2 — FP4/FP8 → BF16 dequantization
 - [x] Phase 3a — 16-sample dryrun calibration + vLLM serve at TP=2 + full harness
 - [x] File upstream Marlin TP scale-sharding bug — [#41511](https://github.com/vllm-project/vllm/issues/41511)
+- [x] Cross-link contribution to PR #40991 — [posted](https://github.com/vllm-project/vllm/pull/40991#issuecomment-4364278447) tagging @jasl @kylesayrs @dsikka
 - [ ] Phase 3b — 1024-sample full calibration *(in progress)*
 - [ ] Phase 4 — Verify Phase 3b artifact at TP=2 + delta vs dryrun
 - [ ] Phase 5 — HF upload + model card publication
@@ -109,9 +113,7 @@ once Phase 3b verification completes.
 ## Upstream contributions
 
 - **[vllm-project/vllm#41511](https://github.com/vllm-project/vllm/issues/41511)** — Marlin MoE TP scale-sharding bug filed May 2, 2026. Affects all compressed-tensors W4A16 MoE under TP > 2.
-- **PR #40991 reasoning-loop hypothesis disambiguation** — empirical
-  comparison data (TP=2 same harness defaults: H200 W4A16 coding 2/2 PASS
-  vs SM120 coding 0/2) posted as a comment on PR #40991.
+- **[PR #40991 cross-link comment](https://github.com/vllm-project/vllm/pull/40991#issuecomment-4364278447)** — empirical comparison data (TP=2 same harness defaults: H200 W4A16 coding 2/2 PASS vs SM120 coding 0/2) tagging @jasl @kylesayrs @dsikka. Disambiguates wuwenthink's coding 0/2 from reasoning-token-exhaustion to SM12x kernel correctness.
 - **kylesayrs PR #41276 integration findings** — five distinct gaps
   documented in this repo for the maintainers' reference.
 
@@ -122,8 +124,8 @@ support), [@kylesayrs](https://github.com/kylesayrs) and the Red Hat / Neural
 Magic team (PR #41276 compressed-tensors, PR #2647 LLM Compressor V4),
 [@bbbearxyz](https://github.com/bbbearxyz) (SM12x Triton fallbacks),
 [@aabbccddwasd](https://github.com/aabbccddwasd) (indexer KV cache layout
-fix), [@wuwenthink](https://github.com/wuwenthink) (SM12x harness
-validation), [@huggingface/transformers](https://github.com/huggingface/transformers)
+fix and SM120 perf optimizations), [@wuwenthink](https://github.com/wuwenthink)
+(SM12x harness validation), [@huggingface/transformers](https://github.com/huggingface/transformers)
 contributors on PR #45643, and [@flagos-ai](https://github.com/flagos-ai) for
 the BF16 dequant tool. This project is integration glue on top of all of that
 work.

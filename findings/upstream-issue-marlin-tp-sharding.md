@@ -1,9 +1,10 @@
 # Upstream Issue: compressed-tensors W4A16 MoE TP scale-sharding bug
 
 **Filed as [vllm-project/vllm#41511](https://github.com/vllm-project/vllm/issues/41511) on May 2, 2026.**
+**Cross-link comment posted on [vllm-project/vllm#40991](https://github.com/vllm-project/vllm/pull/40991#issuecomment-4364278447) tagging @jasl @kylesayrs @dsikka.**
 
 This document is the source of the issue body and the follow-up PR comment
-template for [vllm-project/vllm#40991](https://github.com/vllm-project/vllm/pull/40991).
+for [vllm-project/vllm#40991](https://github.com/vllm-project/vllm/pull/40991).
 
 > **Note on cross-repo references:** GitHub auto-links bare `#NNNN` numbers to the *current* repo. When pasting this body into a `vllm-project/vllm` issue, references to LLM Compressor PRs must be fully qualified (`vllm-project/llm-compressor#2647`) or written as a markdown link, otherwise GitHub will mis-link to an unrelated `vllm-project/vllm` issue with the same number.
 
@@ -204,9 +205,9 @@ Specifically:
 
 ---
 
-## Follow-up PR comment for #40991
+## Follow-up PR comment for #40991 (POSTED)
 
-To be posted on https://github.com/vllm-project/vllm/pull/40991 after filing the issue:
+Posted at https://github.com/vllm-project/vllm/pull/40991#issuecomment-4364278447 on May 2, 2026:
 
 > Filed [#41511](https://github.com/vllm-project/vllm/issues/41511) (compressed-tensors W4A16 MoE TP scale-sharding) as a separate issue since it's orthogonal to the SM12x sparse-MLA / indexer work in this PR. Hits on H200 SM90 too — not SM12x-specific. Verified on `428e08e` + PR #41276 cherry-pick; the 4 intervening commits to current HEAD `68901da` do not touch `compressed_tensors_moe_wna16_marlin.py`, so the bug is bit-identical on current HEAD by construction.
 >
@@ -218,6 +219,8 @@ To be posted on https://github.com/vllm-project/vllm/pull/40991 after filing the
 >
 > /cc @jasl @kylesayrs @dsikka
 
+**Corroboration:** [@aabbccddwasd's May 2 comment on PR #40991](https://github.com/vllm-project/vllm/pull/40991#issuecomment-4363390262) independently identified an SM120-specific indexer KV cache layout-mismatch bug producing NaN logits in the 10^35 range, integrated into jasl's HEAD `68901da` ("Fix SM120 packed FP8 indexer cache reads"). This SM120 numerical-correctness bug supports the kernel-correctness hypothesis for the SM120 coding 0/2 result independent of our Marlin scale-sharding finding.
+
 ---
 
 ## Crediting other contributions
@@ -226,7 +229,7 @@ When the fix lands, credit:
 - @jasl for SM12x-V4 base support (PR #40991)
 - @kylesayrs for compressed-tensors V4 attention path (PR #41276)
 - @bbbearxyz for SM12x Triton fallback kernels
-- @aabbccddwasd for indexer KV cache layout fix
+- @aabbccddwasd for indexer KV cache layout fix and SM120 perf optimizations
 - @wuwenthink for SM12x harness validation
 
 The repo's `findings/kylesayrs-pr-41276-integration.md` already documents all upstream PRs we built on top of.
