@@ -136,8 +136,8 @@ vllm serve pastapaul/DeepSeek-V4-Flash-W4A16-FP8 \
 | Benchmark | Setting | Score |
 |---|---|---|
 | GSM8K | 5-shot, chat-template, flexible-extract | **92.87% ±0.71%** |
-| MMLU | 5-shot | *running* |
-| HumanEval | 0-shot, pass@1 | *queued* |
+| MMLU | 5-shot | **87.27% ±0.27%** |
+| HumanEval | 0-shot, pass@1 | *running* |
 
 Results updated to the [HF model card](https://huggingface.co/pastapaul/DeepSeek-V4-Flash-W4A16-FP8) as each lands.
 
