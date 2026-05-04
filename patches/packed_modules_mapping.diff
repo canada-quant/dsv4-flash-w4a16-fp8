@@ -1,0 +1,23 @@
+--- a/vllm/model_executor/models/deepseek_v4.py
++++ b/vllm/model_executor/models/deepseek_v4.py
+@@ -1572,6 +1572,17 @@
+ class DeepseekV4ForCausalLM(nn.Module, SupportsPP):
+     model_cls = DeepseekV4Model
+
+     # Default mapper assumes the original FP4-expert checkpoint layout.
+     # Overridden per-instance in __init__ when expert_dtype != "fp4".
+     hf_to_vllm_mapper = _make_deepseek_v4_weights_mapper("fp4")
+
++    # PATCH (paul/dsv4): mapping from fused module names to their constituent
++    # shard names. Used by is_layer_skipped() and the compressed-tensors loader
++    # to determine the quantization scheme for fused layers (which are constructed
++    # at vLLM init from the underlying ColumnParallelLinear shards). Without this,
++    # FP8_BLOCK on attn fails with "Unable to find matching target for
++    # model.layers.0.attn.fused_wqa_wkv".
++    packed_modules_mapping = {
++        "fused_wqa_wkv": ["wq_a", "wkv"],
++        "fused_wkv_wgate": ["wkv", "wgate"],
++        "gate_up_proj": ["w1", "w3"],
++    }
++
+     def __init__(self, *, vllm_config: VllmConfig, prefix: str = ""):

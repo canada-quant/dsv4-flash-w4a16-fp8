@@ -42,11 +42,13 @@ def parse_args():
                    help="BF16 input model dir")
     p.add_argument("--output", default=None,
                    help="output dir; default = <input basename>-W4A16-GPTQ")
-    p.add_argument("--samples", type=int, default=1024,
-                   help="number of calibration samples (use 16 for dry-run)")
+    p.add_argument("--samples", type=int, default=768,
+                   help="number of calibration samples (768 is the validated default; "
+                        "use 16 for dry-run; 1024 risks NCCL drift past 60-min timeout)")
     p.add_argument("--max-seq-len", type=int, default=512,
                    help="max calibration sequence length")
-    p.add_argument("--batch-size", type=int, default=32)
+    p.add_argument("--batch-size", type=int, default=4,
+                   help="per-rank batch size (4 is validated; bs>=8 OOMs even with offload_hessians)")
     p.add_argument("--offload-dir", default="/workspace/offload_folder")
     return p.parse_args()
 
@@ -156,6 +158,10 @@ def main():
             ),
         },
         ignore=["lm_head"],
+        offload_hessians=True,   # required: keeps 768 routed-expert Hessians on CPU.
+                                 # Without this, OOMs at Layer 3 even with bs=4.
+                                 # See findings/phase3b-recovery.md for the full
+                                 # OOM/NCCL ladder.
         dampening_frac=0.1,
     )
 
