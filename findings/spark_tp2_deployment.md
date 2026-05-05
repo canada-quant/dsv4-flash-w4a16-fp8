@@ -137,9 +137,48 @@ current size is 21.62 MB. Workspace growth is not allowed after locking.
 
 **Same crash, same symptom, same locked size (21.62 MB)** across both builds. Only the file line number moved (1454 → 1457, file was edited). The locked size is structural and not influenced by `--max-num-batched-tokens`, `--max-num-seqs`, or `--gpu-memory-utilization`. This rules out the bug being a regression in the original build base — it's the workspace allocator design itself.
 
-Confirmed `:next` runs cleanly under `--enforce-eager` (same recipe as `:latest`): `pong` smoke 38 tokens in 18s, workspace-bomb prompt 1005 tokens in 256.5s = 3.92 tok/s decode.
+## Resolution — workspace prereservation patch (2026-05-04)
 
-**Verdict**: ship the `--enforce-eager` recipe as canonical until upstream patches `vllm/v1/worker/workspace.py:_ensure_workspace_size` to allow post-lock growth or DSV4's `_forward_prefill` switches to a non-locked scratch path.
+Tracking the source comment at `deepseek_v4_attention.py:170-172`:
+
+```python
+# Prefill is processed in fixed-size chunks; this bounds the bf16 kv-gather
+# workspace allocated at _forward_prefill (and the matching profile-time
+# reservation in attention_impl's dummy-run branch).
+PREFILL_CHUNK_SIZE = 4
+```
+
+The "matching profile-time reservation in attention_impl's dummy-run branch" implies a pre-reservation was always intended. It just isn't there — the dummy-run path bails out before any workspace allocation happens, so warmup never sees prefill workspace requirements, the lock fires at the post-decode-only size, and the first real prefill request hits the assertion.
+
+Patch implements that intended behaviour: [`scripts/patch_workspace_prereserve.py`](../scripts/patch_workspace_prereserve.py) injects a `_warmup_reserve_prefill_workspace()` method on `DeepseekV4MLAAttention` that calls `get_simultaneous()` with worst-case shapes computed from `max_model_len`, `max_num_batched_tokens`, and config constants. The wrapper's dummy-run early-return then calls this hook so the workspace is sized appropriately before `lock_workspace()` runs.
+
+```python
+# In attention_impl, dummy-run early-return:
+if not isinstance(attn_metadata, dict):
+    out.zero_()
+    self.mla_attn._warmup_reserve_prefill_workspace()  # ← the hook
+    return
+```
+
+Validated on the same workspace-bomb prompt (`en2zh_bus_001`, 1,304-token prompt, `max_tokens=4000`):
+
+| | `:next` (no patch) | **`:warmup` (patch applied)** |
+|---|---|---|
+| HTTP | 500 (workspace lock) | **200** ✅ |
+| Decode | crash | **~14–17 tok/s** (graphs on) |
+| Workspace lock errors | 1 → engine dead | **0** across 100+ requests |
+| Stability | dies on first long prompt | 6+ h continuous, 0 crashes |
+
+Throughput recovered to the graph-mode baseline (~14–17 tok/s) — **~4× the eager workaround (~3.9 tok/s)**. With the patch, `--enforce-eager` is no longer required.
+
+Build the patched image by adding the patch step to the Dockerfile after the `packed_modules_mapping` patch:
+
+```dockerfile
+COPY scripts/patch_workspace_prereserve.py /tmp/
+RUN python3 /tmp/patch_workspace_prereserve.py vllm/model_executor/layers/deepseek_v4_attention.py
+```
+
+**Verdict (revised)**: ship the patched recipe (CUDA graphs ON, no `--enforce-eager`) as canonical. Open issue against vLLM upstream for the underlying workspace-allocator API: ideally either `_ensure_workspace_size` allows opt-in growth post-lock, or there's a documented warmup pre-allocation hook for layers like DSV4 that can't run their full forward in the dummy path.
 
 ## Recommended next iterations
 
