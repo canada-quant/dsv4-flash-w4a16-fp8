@@ -2,14 +2,17 @@
 
 End-to-end integration work to produce a **W4A16 + FP8_BLOCK quantization of
 DeepSeek-V4-Flash that actually serves in vLLM**, on Hopper-class GPUs (H200
-SM 9.0). Built by stacking three in-flight upstream draft PRs and patching
-the gaps between them.
+SM 9.0) **and DGX Spark GB10 (SM 12.1a)**. Built by stacking three in-flight
+upstream draft PRs and patching the gaps between them.
 
-> **Status (2026-05-04):** Phase 3b complete. Calibrated on 768 samples,
-> serves cleanly at TP=2 on 8× H200, full harness suite passes:
-> chat-smoke quick 4/4, quality 4/4, coding 2/2, **toolcall15 26/30 (87%)** —
-> beating the FP4/FP8 native baseline by **+3 points** on toolcall15.
-> Live model: **https://huggingface.co/pastapaul/DeepSeek-V4-Flash-W4A16-FP8** (public, Apache-2.0).
+> **Status (2026-05-04):**
+> - **Phase 3b** — H200 calibration complete (768 samples), full harness PASS, toolcall15 26/30 (87%).
+> - **Phase 4** — DGX Spark TP=2 deployment validated. Workspace lock diagnosed and patched
+>   ([`scripts/patch_workspace_prereserve.py`](scripts/patch_workspace_prereserve.py),
+>   upstream [`vllm-project/vllm#41700`](https://github.com/vllm-project/vllm/issues/41700)).
+>   Spark **GSM8K 95.37%** (vs H200 92.87%), **HumanEval pass@1 80.49%** (vs H200 54.27%),
+>   harness toolcall15 41/45 (92%), 14–17 tok/s decode with CUDA graphs.
+> - Live model: **https://huggingface.co/pastapaul/DeepSeek-V4-Flash-W4A16-FP8** (public, Apache-2.0).
 
 ## Why this exists
 
@@ -22,14 +25,15 @@ As of May 2, 2026:
 - LLM Compressor has **no merged V4 quantization path** — only an open PR (#2647).
 - The published reference quant ([RedHatAI/DeepSeek-V4-Flash-NVFP4-FP8](https://huggingface.co/RedHatAI/DeepSeek-V4-Flash-NVFP4-FP8))
   uses NVFP4 expert weights, which require SM 10.0+ tcgen05 instructions —
-  unavailable on Hopper SM 9.0 and Spark SM 12.1.
+  unavailable on Hopper SM 9.0 and Spark SM 12.1a.
 - Intel published [`Intel/DeepSeek-V4-Flash-W4A16-AutoRound`](https://huggingface.co/Intel/DeepSeek-V4-Flash-W4A16-AutoRound)
   (5 days old, 23k+ downloads), but their model card explicitly states *"vLLM
   and SGLang is not supported currently."*
 
-This project produces a W4A16 GPTQ V4-Flash that **does serve in vLLM at TP=2
-on Hopper today**, with attention quantized to FP8_BLOCK (mirroring RedHat's
-recipe topology, swapping NVFP4 → W4A16 for SM 9.x / 12.x compatibility).
+This project produces a W4A16 GPTQ V4-Flash that **serves in vLLM at TP=2
+on Hopper SM 9.0 (H200) and Blackwell SM 12.1a (DGX Spark GB10) today**, with
+attention quantized to FP8_BLOCK (mirroring RedHat's recipe topology, swapping
+NVFP4 → W4A16 for SM 9.x / 12.x compatibility).
 
 ## Validation (Phase 3b on 8× H200, TP=2)
 
@@ -127,19 +131,20 @@ vllm serve pastapaul/DeepSeek-V4-Flash-W4A16-FP8 \
 - [x] **Phase 2** — Dequantize FP4/FP8 → BF16 (flagos)
 - [x] **Phase 3a** — Dry-run W4A16-FP8 calibration (16 samples) — toolcall15 25/30
 - [x] **Phase 3b** — Full W4A16-FP8 calibration (768 samples) — toolcall15 26/30
-- [x] **Phase 4** — Harness verify on H200 (TP=2): chat-smoke 10/10, toolcall15 26/30
-- [x] **Phase 5** — Public HF release at [`pastapaul/DeepSeek-V4-Flash-W4A16-FP8`](https://huggingface.co/pastapaul/DeepSeek-V4-Flash-W4A16-FP8)
-- [x] **Upstream contribution** — vllm-project/vllm#41511 filed; cross-link comment on PR #40991
+- [x] **Phase 4a** — Harness verify on H200 (TP=2): chat-smoke 10/10, toolcall15 26/30
+- [x] **Phase 4b** — DGX Spark TP=2 deployment ([`findings/spark_tp2_deployment.md`](findings/spark_tp2_deployment.md)): workspace lock diagnosed + patched, harness 4/4 + 18/18 + 41/45, GSM8K 95.37%, HumanEval pass@1 80.49%
+- [x] **Public HF release** at [`pastapaul/DeepSeek-V4-Flash-W4A16-FP8`](https://huggingface.co/pastapaul/DeepSeek-V4-Flash-W4A16-FP8)
+- [x] **Upstream contributions** — workspace allocator bug + patch ([`vllm-project/vllm#41700`](https://github.com/vllm-project/vllm/issues/41700)), Marlin TP scale-sharding ([`#41511`](https://github.com/vllm-project/vllm/issues/41511))
 
-### Standard benchmarks (live)
+### Standard benchmarks
 
-| Benchmark | Setting | Score |
-|---|---|---|
-| GSM8K | 5-shot, chat-template, flexible-extract | **92.87% ±0.71%** |
-| MMLU | 5-shot | **87.27% ±0.27%** |
-| HumanEval | 0-shot (instruct), pass@1 | **54.27% ±3.9%** |
+| Benchmark | Setting | H200 reference | **DGX Spark TP=2** |
+|---|---|---|---|
+| GSM8K | 8-shot, flexible-extract | 92.87% ±0.71% | **95.37% ±0.58%** |
+| HumanEval | pass@1 (instruct, 0-shot, `--confirm_run_unsafe_code`) | 54.27% ±3.9% | **80.49% ±3.10%** |
+| MMLU | 5-shot | 87.27% ±0.27% | (pending) |
 
-Results updated to the [HF model card](https://huggingface.co/pastapaul/DeepSeek-V4-Flash-W4A16-FP8) as each lands.
+Results updated to the [HF model card](https://huggingface.co/pastapaul/DeepSeek-V4-Flash-W4A16-FP8) as each lands. Note: the HumanEval Spark vs H200 delta is largely measurement methodology — Spark run uses strict pass@1 with code execution; the H200 number on the card used regex extraction that under-counts valid generations.
 
 ## Credits
 

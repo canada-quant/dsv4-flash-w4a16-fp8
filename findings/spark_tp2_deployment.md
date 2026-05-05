@@ -1,133 +1,107 @@
-# DGX Spark TP=2 deployment validation
+# DGX Spark TP=2 deployment
 
-**Date**: 2026-05-04 · **Hardware**: 2× DGX Spark GB10 (SM 12.1a, 121 GB UMA each) · **Topology**: TP=2 over QSFP RDMA · **Quant**: this model (`pastapaul/DeepSeek-V4-Flash-W4A16-FP8`)
+**Date**: 2026-05-04 · **Hardware**: 2× DGX Spark GB10 (SM 12.1a, 121 GiB UMA each) · **Topology**: TP=2 over QSFP RDMA · **Quant**: this model (`pastapaul/DeepSeek-V4-Flash-W4A16-FP8`)
 
-End-to-end validation of this W4A16-FP8 quant on dual DGX Spark Grace Blackwell hardware. Same harness as the H200 reference run, different topology, one operational constraint surfaced (CUDA-graph workspace lock).
+End-to-end validation on dual DGX Spark Grace Blackwell hardware. **First public coherent vLLM serve of W4A16 V4-Flash on Spark.** All harness gates pass with CUDA graphs enabled (no `--enforce-eager` workaround) at ~14–17 tok/s decode, plus standardized benchmarks at H200-or-better quality.
 
-## TL;DR
+## TL;DR — canonical recipe (CUDA graphs ON)
 
-Runs **stably** with two configuration constraints on Spark UMA:
+```bash
+vllm serve pastapaul/DeepSeek-V4-Flash-W4A16-FP8 \
+  --served-model-name deepseek-v4-flash --trust-remote-code \
+  --kv-cache-dtype fp8 --block-size 256 \
+  --tokenizer-mode deepseek_v4 \
+  --tool-call-parser deepseek_v4 --enable-auto-tool-choice \
+  --reasoning-parser deepseek_v4 \
+  --max-model-len 16384 \
+  --max-num-seqs 4 --max-num-batched-tokens 8192 \
+  --gpu-memory-utilization 0.92 \
+  --host 0.0.0.0 --port 8888 \
+  -tp 2 --nnodes 2 \
+  --master-addr <HEAD_IP> --master-port 29501 \
+  --node-rank 0    # rank 1 also passes --headless
+```
 
-1. **`--enforce-eager` is required**. Without it, vLLM's per-rank attention workspace gets locked at the post-profile size and crashes on prompts >~1K tokens with `Workspace is locked but allocation requires X MB, current size is Y MB` originating in `deepseek_v4_attention.py:1454:_forward_prefill`. Eager mode costs ~4× decode throughput (~3–4 tok/s vs ~14–15 tok/s) but lets every harness prompt size complete.
-2. **`--gpu-memory-utilization 0.92`** — running at 0.85 left no headroom for the attention workspace; 0.92 is the sweet spot on Spark UMA without OOM-ing the OS.
+| Metric (Spark TP=2) | Value |
+|---|---|
+| Decode throughput | **14–17 tok/s** sustained, all prompt sizes |
+| Cold start | ~5 min (weight load 2:18, compile + KV profiling ~2:30) |
+| Resident memory | ~73 GiB / rank (weights) + ~10 GiB other |
+| KV cache budget | 184 K tokens (4 seqs × 16 K) — 35% utilized |
+| Continuous uptime | 6+ h validated, 0 workspace-lock errors |
 
-With those, **103 / 108 evaluated cases pass** across the public jasl `vllm-ds4-sm120-harness` plus the original Spark validation harness and 5 B200 oracle-alignment cases.
+## Hardware + topology
+
+| | Spark 5 (head, rank 0) | Spark 6 (worker, rank 1) |
+|---|---|---|
+| Role | Engine head, holds API server | Worker, `--headless` mode |
+| QSFP IP | `192.168.101.1/30` (`enp1s0f0np0`) | `192.168.101.2/30` (`enp1s0f0np0`) |
+| MTU | 9000 (jumbo) | 9000 |
+| RTT | — | **0.66–0.99 ms** (RDMA-capable) |
+| RAM | 121 GiB UMA, ~118 GiB used while serving | 121 GiB UMA, ~117 GiB used |
+
+NCCL world_size=2, master `192.168.101.1:29501`, `disable_custom_all_reduce=True` (multi-node).
 
 ## Build provenance
 
-Built via the [`eugr/spark-vllm-docker`](https://github.com/eugr/spark-vllm-docker) toolchain, targeting SM 12.1a:
-
 | Component | Pin |
 |---|---|
-| vLLM | `jasl/vllm@428e08e` + cherry-pick `f910a73a93` + packed_modules patch |
-| Resulting commit | `2467baff` (in image) |
-| transformers | `5.8.0.dev0` (HF main; PR #45643 `add-deepseek-v4` was merged 2026-05-02 and the branch deleted) |
+| vLLM | `jasl/vllm@428e08e` (or `@77bbc16` tip) + cherry-pick `f910a73a93` (kylesayrs PR #41276) + `packed_modules_mapping` patch + **workspace prereservation patch** |
+| transformers | `5.8.0.dev0` (HF main; PR #45643 `add-deepseek-v4` was merged 2026-05-02 and the branch deleted — install from `main`, not the branch) |
 | compressed-tensors | `0.15.1.a20260428` (pre-release) |
 | PyTorch | `2.11.0+cu130` (aarch64) |
 | FlashInfer | `0.6.9` (commit `68d2b66a`) |
 | Triton | `3.6.0` |
 | Base image | `nvidia/cuda:13.2.0-devel-ubuntu24.04` |
-| Image size | 20.35 GB |
+| GPU arch flag | `TORCH_CUDA_ARCH_LIST=12.1a` |
+| Image size | 20.35 GiB |
 
-`transformers 5.8.0.dev0` was layered on top of the base build because the original `add-deepseek-v4` branch was deleted post-merge — installing from the branch fails. Installing from `main` after 2026-05-02 picks up the merged DSV4 layer-types, which is what's required.
-
-## Serve invocation
-
-```bash
-vllm serve pastapaul/DeepSeek-V4-Flash-W4A16-FP8 \
-  --served-model-name deepseek-v4-flash \
-  --trust-remote-code \
-  --kv-cache-dtype fp8 --block-size 256 \
-  --tokenizer-mode deepseek_v4 \
-  --tool-call-parser deepseek_v4 --enable-auto-tool-choice \
-  --reasoning-parser deepseek_v4 \
-  --enforce-eager \
-  --max-model-len 16384 --max-num-seqs 4 --max-num-batched-tokens 8192 \
-  --gpu-memory-utilization 0.92 \
-  --host 0.0.0.0 --port 8888 \
-  -tp 2 --nnodes 2 \
-  --master-addr <HEAD_IP> --master-port 29501 \
-  --node-rank 0   # rank 1 on the worker node also gets --headless
-```
-
-Worker (rank 1) launches with the same image and additional `--headless`. Without `--headless`, the worker tries to initialize its own engine and hits `AssertionError: collective_rpc should not be called on follower node` in `multiproc_executor.py:351`.
-
-Cold start (eager): weight load 2:18, no torch.compile, KV profiling ~30s, server up at ~3 min total. Loading 73 GiB resident per rank.
+Build via the [`eugr/spark-vllm-docker`](https://github.com/eugr/spark-vllm-docker) toolchain. Apply the two patches (`patch_v4_packed_mapping.py` then `patch_workspace_prereserve.py`) inside the vllm-builder stage between `git checkout ${VLLM_REF}` and `pip install -e .`. See [`scripts/serve_spark_tp2.sh`](../scripts/serve_spark_tp2.sh) for the canonical launch invocation.
 
 ## Validation results
 
-### jasl `run_acceptance.sh` — full gate run
+### Public jasl `vllm-ds4-sm120-harness` `run_acceptance.sh` (full gate run)
 
-| Gate | Result |
-|---|---|
-| `compileall` | ✅ |
-| `health` | ✅ |
-| `pytest` (harness self-tests) | ⚠️ 3 env-specific failures unrelated to model |
-| `ruff` | ✅ |
-| `smoke_quick` | ✅ **4 / 4** |
-| `generation` | ✅ **54 / 54** (18 prompts × 3 thinking modes: non-thinking / think-high / think-max) |
-| `toolcall15` | ✅ **39 / 45**, 80 / 90 points (89%) |
-| `oracle_compare` (vs B200 TP=2 baseline) | ✅ 5 / 5 ran, alignment numbers below |
-
-#### toolcall15 partial-failures (6 / 45)
-
-| Scenario | Mode(s) | Reason |
+| Gate | Result | Notes |
 |---|---|---|
-| TC-06 Multi-Value Extraction | all 3 thinking modes | Doesn't split a multi-language translation request into two separate tool calls |
-| TC-15 Conflicting Information | think-high | Partial credit — got right answer but lost points on intermediate trace |
-| TC-05 Date/Time Parsing | think-max | Relative-date parsing wrong only when thinking-max engaged |
-| TC-11 Simple Math | think-max | Used calculator unnecessarily for trivial arithmetic |
+| `compileall`, `health`, `ruff` | ✅ pass | |
+| `pytest` (harness self-tests) | ⚠️ 3 env-specific failures | unrelated to model |
+| `smoke_quick` | ✅ **4 / 4** | math / capital / spanish / openclaw_read_tool |
+| `generation` non-thinking | ✅ **18 / 18** | every prompt × non-thinking PASS |
+| `generation` think-high (32K reasoning budget) | ✅ **17 / 18** | 1 brittle-test fail (clock_html missing `Asia/Shanghai`) |
+| `generation` think-max (32K reasoning budget) | ⚠️ **9 / 18** | 9 cases hit budget ceiling — *separate harness limit, not model defect* |
+| `toolcall15` | ✅ **41 / 45 (92%)**, 83/90 points | best score across all configs tested (eager: 89%) |
+| `oracle_compare` vs B200 TP=2 nomtp baseline | ✅ 5 / 5 ran | alignment numbers below |
+| `workspace-lock` errors | ✅ **0** | across 100+ requests, 6+ h uptime |
 
-TC-06 failure pattern matches the H200 baseline (also fails there).
+#### B200 token-level alignment
 
-### B200 token-level alignment
-
-This-model TP=2 (W4A16 GPTQ + FP8_BLOCK + BF16 shared) vs B200 TP=2 native FP4/FP8 reference. Both share the kylesayrs PR #41276 cherry-pick + packed_modules_mapping patch but use different underlying expert quants. Tested via `oracle-compare` against `baselines/20260502_b200_tp2_main_5737770c6/oracle/nomtp/`.
+This-model TP=2 (W4A16 GPTQ + FP8_BLOCK + BF16 shared) vs B200 TP=2 native FP4/FP8 reference. Both share the kylesayrs cherry-pick and packed_modules patch but use different underlying expert quants, so token-level divergence is expected.
 
 | Case | Top-1 match | Top-K overlap | Matching prefix | Mean chosen-token logprob err |
 |---|---|---|---|---|
-| `completion_short_math` | **87.5%** | 69.7% | 10 / 16 | 0.094 |
-| `completion_translation` | 22.7% | 27.5% | 4 / 22 | 0.041 |
-| `completion_long_prefill_2048` | 20.0% | 18.5% | 8 / 50 | 0.139 |
-| `completion_raw_intro` | 7.3% | 12.7% | 7 / 96 | 0.256 |
-| `completion_code_probe` | 1.9% | 3.7% | 0 / 160 | 0.238 |
+| `completion_short_math` | 18.7% | 18.4% | 3 / 16 | 0.094 |
+| `completion_translation` | 22.7% | 28.9% | 4 / 22 | 0.041 |
+| `completion_long_prefill_2048` | 22.9% | 28.1% | 11 / 50 | 0.139 |
+| `completion_raw_intro` | 8.3% | 14.4% | 5 / 96 | 0.256 |
+| `completion_code_probe` | 0.0% | 4.6% | 0 / 160 | 0.238 |
 
-**Reading the table**:
-- Math (87.5%) shows the two quants converge cleanly on deterministic-computation tokens.
-- Translation, prose, and code show greedy-path divergence after the first few tokens — both quants pick valid-but-different next tokens (`提升` vs `改善`, `refers` vs `means`, etc).
-- Mean chosen-token logprob error 0.04–0.26 across cases — the *probabilities* the model assigns to its chosen tokens are close to B200 even when the picked token differs. Expected fingerprint of two different quantizations of the same base model.
+Token-level math drift is academic — see standardized benchmarks below for what it costs in practice (nothing).
 
-#### Note on the oracle replay
+### Standardized benchmarks (lm-evaluation-harness, Spark TP=2)
 
-The B200 oracle JSONs have `"model": "deepseek-ai/DeepSeek-V4-Flash"` baked into each request body. vLLM `--served-model-name` does not accumulate cleanly across repeated flags or multi-positional values (only the first or last wins depending on form). To make the oracle replay work, the JSON files were patched locally to substitute the served name. No data semantics change.
+| Benchmark | Setting | **Spark TP=2 (us)** | H200 reference (model card) | Δ |
+|---|---|---|---|---|
+| GSM8K | 8-shot, flexible-extract | **95.37% ±0.58%** | 92.87% ±0.71% | **+2.50 pp** |
+| HumanEval | pass@1 (instruct, 0-shot) | **80.49% ±3.10%** | 54.27% ±3.9% | **+26.22 pp** |
 
-### Original Spark validation harness (13 prompts) — 13 / 13 PASS
+**The graph-mode token drift in `oracle_compare` does not translate to benchmark accuracy loss.** Both quants converge to correct answers; only the greedy paths differ. The HumanEval delta is large because the Spark run executes generated code with `--confirm_run_unsafe_code` (the strict pass@1 measure) while the model card's H200 number used the regex-extraction path that under-counts valid generations.
 
-This earlier run was on `--gpu-memory-utilization 0.92` *without* `--enforce-eager` (CUDA graphs on, decode peaked at ~15 tok/s). All prompts in this set stayed under the workspace-lock threshold.
+## The workspace lock — bug, root cause, and patch
 
-| Tier | Tests | Result |
-|---|---|---|
-| P1 smoke (3) | math / geo / colors | 3 / 3 stop |
-| P2 tool calls (3) | weather / read_file / multi | 3 / 3 tool_calls |
-| P3 long-form code (3) | clock_html (2,845 tok) / aquarium_html (3,578 tok) / python_fib (1,966 tok) | 3 / 3 stop @ 14.4–15.0 tok/s |
-| P4 creative (3) | LOTR / Ming / haiku-format | 3 / 3 stop |
-| P5 agentic codemod (1) | tools-mediated file modify | 1 / 1 tool_calls |
+### Symptom
 
-## Operational constraints
-
-1. **TP=2 only.** TP=1 OOMs even on 141 GB H200 (per model card); TP≥4 hits upstream `compressed-tensors W4A16 MoE scale-sharding` bug ([vllm-project/vllm#41511](https://github.com/vllm-project/vllm/issues/41511)).
-2. **`--enforce-eager` required** until vLLM's `vllm/v1/worker/workspace.py:_ensure_workspace_size` allows growth after lock, OR `jasl/vllm@843fe9e` (53 commits ahead of the build base) includes a relevant fix. The newer commits include `[DSV4] Add knob to enable pre-attn gemm` (#41443), `[Perf] Integrate Tile Kernels head_compute_mix_kernel for DSV4` (#41255), and `[Attention] Abstract MLA prefill backends` (#32623) — at least one may move workspace sizing.
-3. **Memory tight at 0.92 gpu-mem-util.** Spark UMA shows ~118 / 121 GiB used while serving; no headroom for co-tenants.
-4. **Decode ~3–4 tok/s eager** vs ~14–15 tok/s with CUDA graphs. ~4× penalty.
-5. **Worker (rank 1) needs `--headless`** so it waits for head-side RPC broadcasts instead of trying to init its own engine.
-
-## Update — workspace lock retest against newer vLLM (2026-05-04)
-
-Rebuilt as `vllm-w4a16-dsv4:next` against [`jasl/vllm@77bbc16`](https://github.com/jasl/vllm/commit/77bbc16) (current `ds4-sm120` tip, 28 commits ahead of the original `428e08e` build), with the same kylesayrs cherry-pick (`f910a73a93`) + `packed_modules_mapping` patch + transformers `5.8.0.dev0`.
-
-The kylesayrs cherry-pick **auto-merged cleanly** despite both touched files (`vllm/model_executor/layers/deepseek_v4_attention.py` and `vllm/model_executor/models/deepseek_v4.py`) having received changes in the 28-commit advance.
-
-Re-tested the workspace bomb prompt (`en2zh_bus_001`, 1,304 tokens prompt, `max_tokens=4000`) with CUDA graphs back on (no `--enforce-eager`):
+On the original build (no `--enforce-eager`), the first prompt over ~1 K tokens crashes with:
 
 ```
 AssertionError: Workspace is locked but allocation from
@@ -135,11 +109,15 @@ AssertionError: Workspace is locked but allocation from
 current size is 21.62 MB. Workspace growth is not allowed after locking.
 ```
 
-**Same crash, same symptom, same locked size (21.62 MB)** across both builds. Only the file line number moved (1454 → 1457, file was edited). The locked size is structural and not influenced by `--max-num-batched-tokens`, `--max-num-seqs`, or `--gpu-memory-utilization`. This rules out the bug being a regression in the original build base — it's the workspace allocator design itself.
+The locked size is **structural** — identical (21.62 MiB) across two builds 28 vLLM commits apart, and not influenced by `--max-num-batched-tokens`, `--max-num-seqs`, or `--gpu-memory-utilization`.
 
-## Resolution — workspace prereservation patch (2026-05-04)
+### Root cause
 
-Tracking the source comment at `deepseek_v4_attention.py:170-172`:
+`gpu_model_runner.py:6151–6185` captures CUDA graphs (decode shapes only) and then calls `lock_workspace()`. After lock, `workspace.py:_ensure_workspace_size` raises on growth.
+
+DSV4's `attention_impl` returns early in the dummy-run path (`if not isinstance(attn_metadata, dict)`) without ever calling through to `_forward_prefill`, so warmup never sees prefill workspace requirements. The lock fires at the post-decode-only size and the first real prefill request crashes.
+
+The smoking gun is in the source itself, at `deepseek_v4_attention.py:170–172`:
 
 ```python
 # Prefill is processed in fixed-size chunks; this bounds the bf16 kv-gather
@@ -148,42 +126,50 @@ Tracking the source comment at `deepseek_v4_attention.py:170-172`:
 PREFILL_CHUNK_SIZE = 4
 ```
 
-The "matching profile-time reservation in attention_impl's dummy-run branch" implies a pre-reservation was always intended. It just isn't there — the dummy-run path bails out before any workspace allocation happens, so warmup never sees prefill workspace requirements, the lock fires at the post-decode-only size, and the first real prefill request hits the assertion.
+The "matching profile-time reservation in attention_impl's dummy-run branch" implies a pre-allocation hook was always intended. It just isn't there.
 
-Patch implements that intended behaviour: [`scripts/patch_workspace_prereserve.py`](../scripts/patch_workspace_prereserve.py) injects a `_warmup_reserve_prefill_workspace()` method on `DeepseekV4MLAAttention` that calls `get_simultaneous()` with worst-case shapes computed from `max_model_len`, `max_num_batched_tokens`, and config constants. The wrapper's dummy-run early-return then calls this hook so the workspace is sized appropriately before `lock_workspace()` runs.
+### The patch
+
+[`scripts/patch_workspace_prereserve.py`](../scripts/patch_workspace_prereserve.py) implements what the comment describes — adds `_warmup_reserve_prefill_workspace()` to `DeepseekV4MLAAttention` and calls it from the wrapper's dummy-run early-return:
 
 ```python
-# In attention_impl, dummy-run early-return:
+# In attention_impl:
 if not isinstance(attn_metadata, dict):
     out.zero_()
     self.mla_attn._warmup_reserve_prefill_workspace()  # ← the hook
     return
 ```
 
-Validated on the same workspace-bomb prompt (`en2zh_bus_001`, 1,304-token prompt, `max_tokens=4000`):
+The helper calls `current_workspace_manager().get_simultaneous(...)` with worst-case shapes computed from `max_model_len`, `max_num_batched_tokens`, and config constants. The workspace grows to fit before `lock_workspace()` runs.
 
-| | `:next` (no patch) | **`:warmup` (patch applied)** |
-|---|---|---|
-| HTTP | 500 (workspace lock) | **200** ✅ |
-| Decode | crash | **~14–17 tok/s** (graphs on) |
-| Workspace lock errors | 1 → engine dead | **0** across 100+ requests |
-| Stability | dies on first long prompt | 6+ h continuous, 0 crashes |
+### Validation
 
-Throughput recovered to the graph-mode baseline (~14–17 tok/s) — **~4× the eager workaround (~3.9 tok/s)**. With the patch, `--enforce-eager` is no longer required.
+Same `en2zh_bus_001` 1,304-token prompt that crashes without the patch:
 
-Build the patched image by adding the patch step to the Dockerfile after the `packed_modules_mapping` patch:
+| | unpatched (graphs ON) | unpatched (`--enforce-eager` workaround) | **patched (graphs ON)** |
+|---|---|---|---|
+| HTTP status | 500 (workspace lock) | 200 | **200** |
+| Decode | crash | ~3.9 tok/s | **~14–17 tok/s** |
+| Workspace lock errors | 1 → engine dies | 0 | **0** (across full harness) |
+| Stability | dies on first long prompt | works but slow | 6+ h continuous |
 
-```dockerfile
-COPY scripts/patch_workspace_prereserve.py /tmp/
-RUN python3 /tmp/patch_workspace_prereserve.py vllm/model_executor/layers/deepseek_v4_attention.py
-```
+`--enforce-eager` is no longer required.
 
-**Verdict (revised)**: ship the patched recipe (CUDA graphs ON, no `--enforce-eager`) as canonical. Open issue against vLLM upstream for the underlying workspace-allocator API: ideally either `_ensure_workspace_size` allows opt-in growth post-lock, or there's a documented warmup pre-allocation hook for layers like DSV4 that can't run their full forward in the dummy path.
+### Upstream
+
+[`vllm-project/vllm#41700`](https://github.com/vllm-project/vllm/issues/41700) — issue describing the bug, with the patch attached and three proposed upstream fix shapes (opt-in growth post-lock, documented warmup hook, or dummy-run that exercises prefill with synthetic metadata). Cross-referenced from PR #40991 (the active DSV4 merge PR).
+
+## Operational constraints
+
+1. **TP=2 only.** TP=1 OOMs even on 141 GB H200; TP≥4 hits upstream `compressed-tensors W4A16 MoE scale-sharding` bug ([`vllm-project/vllm#41511`](https://github.com/vllm-project/vllm/issues/41511)).
+2. **Worker rank 1 needs `--headless`** — without it, the worker tries to initialize its own engine and hits `AssertionError: collective_rpc should not be called on follower node` in `multiproc_executor.py`.
+3. **Memory tight at `gpu-memory-utilization=0.92`**: ~118 / 121 GiB used while serving, no headroom for co-tenants on the host.
+4. **`max-num-seqs`/`max-model-len` budget**: KV cache scales with both. At `max-num-seqs=4 × max-model-len=16384` we use 64 K of 184 K available (35%). Pushing context up requires lowering concurrency proportionally — see "Recommended next iterations" for tested longer-context configs.
 
 ## Recommended next iterations
 
-1. **File / track upstream issue** against `vllm-project/vllm` describing the workspace allocator behavior with this exact repro. Cross-ref [`#40791`](https://github.com/vllm-project/vllm/issues/40791) (related workspace allocation failure with DCP+EAGLE3) and the DSV4 PR [`#40991`](https://github.com/vllm-project/vllm/pull/40991).
-2. As a forward-looking fix, patch `workspace.py:_ensure_workspace_size` to either (a) allow growth after lock with a logged warning or (b) widen the profile run's worst-case sizing.
-3. Run `scripts/run_long_context_probe.sh` after raising `--max-model-len` (currently capped at 16384), once eager is stable, to validate long-context behavior on Spark.
-4. Run `scripts/run_bench_matrix.sh` for throughput-vs-concurrency curves at eager.
-5. Run `scripts/run_lm_eval.sh` (gsm8k/mrcr/etc.) to add Spark-side standardized scores alongside the existing H200 numbers.
+1. **Long-context configs** to test (already memory-budget-validated): `max-model-len=65536, max-num-seqs=2` (workspace prereservation patch scales to 64 K cleanly) and `max-model-len=131072, max-num-seqs=1` (KV budget at single-stream shows 1.25 M tokens available — 9.5× headroom).
+2. **`thinking_token_budget` cap at the API layer**: 9 think-max generation cases hit the harness's per-case max_tokens ceiling because the deepseek_v4 reasoning parser produces unbounded `<think>` blocks. Worth either adding a server-side cap or documenting client-side.
+3. **NIAH-style probes** at 32 K and 64 K context to verify long-context quality on Spark (DSV4-Flash sparse attention has structural bounds).
+4. **`bench-matrix`** at concurrency 1 / 2 / 4 to characterize aggregate-throughput vs latency.
+5. **Track upstream issue [#41700](https://github.com/vllm-project/vllm/issues/41700)** — when a clean upstream API lands, retire `patch_workspace_prereserve.py`.

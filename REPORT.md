@@ -174,13 +174,35 @@ Next: Phase 3b (full 1024-sample calibration) launching for upgraded artifact, s
 
 ## Phase 4 — DGX Spark TP=2 deployment validation (2026-05-04)
 
-The Phase 3a tests above ran on 8× H200 (SM 9.0, single-machine TP=2 inside the DLAMI venv). Phase 4 deployed the same artifact onto the *original target topology*: two DGX Spark GB10 boxes (SM 12.1a, 121 GiB UMA each) running TP=2 over a QSFP RDMA direct-connect, packaged in the `eugr/spark-vllm-docker` toolchain.
+Deployed the artifact onto the *original target topology*: two DGX Spark GB10 boxes (SM 12.1a, 121 GiB UMA each) running TP=2 over a QSFP RDMA direct-connect, packaged in the `eugr/spark-vllm-docker` toolchain. Cherry-pick of `f910a73a93` auto-merged cleanly on the current `jasl/vllm@77bbc16` tip.
 
-**Result**: 103 / 108 evaluated cases PASS across the public jasl harness (`run_acceptance.sh`), the original 13-prompt Spark validation harness, and 5 B200 oracle-alignment cases. Two configuration constraints surfaced and were resolved:
+### Workspace lock — diagnosed and patched
 
-1. **`--enforce-eager` is required** — without it, the per-rank attention workspace gets locked at the post-profile size and crashes on prompts >~1K tokens with `Workspace is locked but allocation requires X MB, current size is Y MB` from `deepseek_v4_attention.py:_forward_prefill`. Eager mode costs ~4× decode throughput (~3–4 tok/s vs ~14–15 tok/s) but lets every harness prompt size complete.
-2. **Worker rank 1 needs `--headless`** — without it, the worker tries to initialize its own engine and hits `AssertionError: collective_rpc should not be called on follower node` in `multiproc_executor.py`.
+Without `--enforce-eager`, the first prompt over ~1 K tokens crashed with `AssertionError: Workspace is locked but allocation from deepseek_v4_attention.py:1457:_forward_prefill requires 21.80 MB, current size is 21.62 MB`. The locked size was structural — identical across two builds 28 vLLM commits apart.
 
-Detailed results, B200 token-level alignment table, build provenance, and operational constraints are in **[`findings/spark_tp2_deployment.md`](findings/spark_tp2_deployment.md)**.
+Source comment at `deepseek_v4_attention.py:170-172` says "matching profile-time reservation in attention_impl's dummy-run branch" — implying a pre-allocation hook was always intended, just never landed. **`scripts/patch_workspace_prereserve.py`** implements that hook (~30 lines, single file) — `_warmup_reserve_prefill_workspace()` on `DeepseekV4MLAAttention` called from the wrapper's dummy-run early-return so the workspace gets sized before `lock_workspace()` fires.
 
-This is the first end-to-end validation of `pastapaul/DeepSeek-V4-Flash-W4A16-FP8` on real DGX Spark hardware, not the H200 reference rig.
+With the patch applied, `--enforce-eager` is no longer required and decode runs at ~14–17 tok/s (vs ~3.9 tok/s under eager). Filed upstream as [`vllm-project/vllm#41700`](https://github.com/vllm-project/vllm/issues/41700) with patch + repro.
+
+### Multi-node detail
+
+Worker rank 1 needs `--headless` — without it, the worker tries to initialize its own engine and hits `AssertionError: collective_rpc should not be called on follower node` in `multiproc_executor.py`.
+
+### Headline results (Spark TP=2, canonical recipe — graphs ON, no eager)
+
+| Test | Result |
+|---|---|
+| Public jasl harness `chat-smoke` | **4 / 4 PASS** |
+| `generation` non-thinking | **18 / 18 PASS** |
+| `generation` think-high (32K reasoning budget) | **17 / 18 PASS** (1 brittle-test fail) |
+| `generation` think-max (32K budget) | 9 / 18 (9 fails are harness budget ceiling, not model defect) |
+| `toolcall15` | **41 / 45 (92%)**, 83/90 points — best across all configs tested |
+| `oracle_compare` vs B200 TP=2 nomtp | 5 / 5 ran, alignment numbers in findings doc |
+| **GSM8K 8-shot** | **95.37% ±0.58%** — vs 92.87% on H200 reference (+2.5 pp) |
+| **HumanEval pass@1 instruct** | **80.49% ±3.10%** — vs 54.27% on H200 reference (+26 pp) |
+| Decode throughput | 14–17 tok/s sustained, all prompt sizes |
+| Continuous uptime | 6+ h validated, 0 workspace-lock errors |
+
+Full validation report — build provenance, B200 token-level alignment table, operational constraints, recommended next iterations — in [`findings/spark_tp2_deployment.md`](findings/spark_tp2_deployment.md). Canonical launch script: [`scripts/serve_spark_tp2.sh`](scripts/serve_spark_tp2.sh).
+
+This is the first end-to-end validation of `pastapaul/DeepSeek-V4-Flash-W4A16-FP8` on real DGX Spark hardware.

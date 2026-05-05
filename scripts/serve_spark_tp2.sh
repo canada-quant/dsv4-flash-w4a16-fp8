@@ -1,16 +1,19 @@
 #!/usr/bin/env bash
 # Serve pastapaul/DeepSeek-V4-Flash-W4A16-FP8 on dual DGX Spark GB10 (SM 12.1a)
-# at TP=2 over QSFP RDMA. Two flags differ from the H200 recipe and are
-# load-bearing on Spark UMA:
+# at TP=2 over QSFP RDMA. Canonical recipe — CUDA graphs ON, no eager workaround.
 #
-#   --enforce-eager          // workspace-lock workaround (see Known issues)
-#   --headless               // worker rank only; head omits this
+# Two flags differ from the H200 recipe (scripts/serve_quant.sh):
 #
-# Plus 0.92 gpu-mem-util (0.85 leaves no headroom for the attention workspace).
+#   --gpu-memory-utilization 0.92  // 0.85 leaves no headroom for the workspace
+#   --headless (worker rank only)  // multi-node: head omits this
 #
-# Container image must contain:
-#   - jasl/vllm@428e08e + cherry-picked neuralmagic/kylesayrs/deepseek-ct@f910a73a93
-#     + scripts/patch_v4_packed_mapping.py
+# Container image must contain (build via eugr/spark-vllm-docker, see findings/):
+#   - jasl/vllm@428e08e (or @77bbc16 tip) + cherry-picked
+#     neuralmagic/kylesayrs/deepseek-ct@f910a73a93 (PR #41276)
+#   - patches/packed_modules_mapping (scripts/patch_v4_packed_mapping.py)
+#   - patches/workspace prereservation (scripts/patch_workspace_prereserve.py)
+#       ^ without this patch --enforce-eager is required (~4x decode penalty);
+#         see findings/spark_tp2_deployment.md and vllm-project/vllm#41700
 #   - transformers==5.8.0.dev0 (HF main; PR #45643 add-deepseek-v4 was merged
 #     2026-05-02 and the branch deleted — install from main, not the branch)
 #   - compressed-tensors==0.15.1.a20260428
@@ -20,11 +23,17 @@
 #   On the head node (rank 0):
 #     HEAD_IP=192.168.x.y NODE_RANK=0 ./serve_spark_tp2.sh
 #   On the worker node (rank 1):
-#     HEAD_IP=192.168.x.y NODE_RANK=1 HEADLESS=1 ./serve_spark_tp2.sh
+#     HEAD_IP=192.168.x.y NODE_RANK=1 ./serve_spark_tp2.sh
 #
 # Both nodes must reach the model snapshot at the same local path
 # ($HF_HOME/hub/models--pastapaul--DeepSeek-V4-Flash-W4A16-FP8/snapshots/<rev>/)
 # either via shared NFS or pre-rsync over the QSFP link.
+#
+# Validated decode throughput (Spark TP=2, this recipe):
+#   - sustained ~14-17 tok/s on prompts up to 1.3K tokens with 4K output
+#   - 6+ hours continuous uptime, 0 workspace-lock errors
+#   - GSM8K 8-shot: 95.37% (vs 92.87% on H200)
+#   - HumanEval pass@1 instruct: 80.49% (vs 54.27% on H200)
 
 set -euo pipefail
 
@@ -35,6 +44,8 @@ MASTER_PORT="${MASTER_PORT:-29501}"
 NODE_RANK="${NODE_RANK:-0}"
 NNODES="${NNODES:-2}"
 PORT="${PORT:-8888}"
+MAX_MODEL_LEN="${MAX_MODEL_LEN:-16384}"
+MAX_NUM_SEQS="${MAX_NUM_SEQS:-4}"
 HEADLESS_FLAG=""
 if [[ "${NODE_RANK}" -gt 0 || "${HEADLESS:-0}" == "1" ]]; then
   HEADLESS_FLAG="--headless"
@@ -49,9 +60,8 @@ vllm serve "${MODEL}" \
   --tool-call-parser deepseek_v4 \
   --enable-auto-tool-choice \
   --reasoning-parser deepseek_v4 \
-  --enforce-eager \
-  --max-model-len 16384 \
-  --max-num-seqs 4 \
+  --max-model-len "${MAX_MODEL_LEN}" \
+  --max-num-seqs "${MAX_NUM_SEQS}" \
   --max-num-batched-tokens 8192 \
   --gpu-memory-utilization 0.92 \
   --host 0.0.0.0 \

@@ -89,8 +89,12 @@ vllm serve pastapaul/DeepSeek-V4-Flash-quantized.w4a16 \
   --reasoning-parser deepseek_v4
 ```
 
-For DGX Spark (SM121 / GB10) and similar Blackwell-family targets, see the
-[Spark deployment notes](https://github.com/pasta-paul/dsv4-flash-awq-w4a16/blob/main/findings/spark-deployment.md) <TBD>.
+For DGX Spark (SM 12.1a / GB10) at TP=2, see the canonical recipe and validation
+report in [`findings/spark_tp2_deployment.md`](https://github.com/pasta-paul/dsv4-flash-w4a16-fp8/blob/main/findings/spark_tp2_deployment.md)
+and the launch script [`scripts/serve_spark_tp2.sh`](https://github.com/pasta-paul/dsv4-flash-w4a16-fp8/blob/main/scripts/serve_spark_tp2.sh).
+The Spark recipe additionally requires the workspace prereservation patch
+([`scripts/patch_workspace_prereserve.py`](https://github.com/pasta-paul/dsv4-flash-w4a16-fp8/blob/main/scripts/patch_workspace_prereserve.py),
+filed upstream as [`vllm-project/vllm#41700`](https://github.com/vllm-project/vllm/issues/41700)).
 
 ### Loading in transformers (inspection / debugging only)
 
@@ -186,12 +190,15 @@ Recovery percentages will be reported relative to this baseline.
    When the PR merges (or is rebased), the deployment instructions above will
    be updated. Pin to the referenced commit for stable behavior.
 
-2. **No DGX Spark / SM121 deployment is currently validated.** The model
-   produced by this pipeline targets compressed-tensors W4A16, which requires
-   Marlin (or equivalent) W4A16 kernels. On Hopper / Ampere these select
-   cleanly. On Blackwell / SM12x family, kernel selection has been observed to
-   take Triton fallback paths that have known bugs in the V4 inference path
-   (see SM90-vs-SM12x findings). Spark deployment is tracked separately.
+2. **DGX Spark TP=2 deployment is validated** (2026-05-04). Marlin W4A16
+   kernels select cleanly on SM 12.1a once the workspace prereservation patch
+   is applied (see [`scripts/patch_workspace_prereserve.py`](https://github.com/pasta-paul/dsv4-flash-w4a16-fp8/blob/main/scripts/patch_workspace_prereserve.py)).
+   Without the patch, `--enforce-eager` is required as a workaround
+   (~4× decode penalty). With the patch, decode runs at ~14–17 tok/s with
+   CUDA graphs enabled. Spark-side benchmarks: GSM8K 95.37% (vs 92.87% on H200),
+   HumanEval pass@1 80.49% (vs 54.27% on H200 — methodology difference),
+   harness toolcall15 41/45 (92%). Full report:
+   [`findings/spark_tp2_deployment.md`](https://github.com/pasta-paul/dsv4-flash-w4a16-fp8/blob/main/findings/spark_tp2_deployment.md).
 
 3. **Reasoning modes:** This quant has been validated for the default
    (Non-think) reasoning mode only. Think High and Think Max modes are
