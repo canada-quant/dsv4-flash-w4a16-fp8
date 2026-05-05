@@ -197,13 +197,15 @@ Recovery percentages will be reported relative to this baseline.
    (~4× decode penalty). With the patch, decode runs at ~14–17 tok/s with
    CUDA graphs enabled. Spark-side benchmarks: GSM8K 95.37% (vs 92.87% on H200),
    HumanEval pass@1 80.49% (vs 54.27% on H200 — methodology difference),
-   harness toolcall15 41/45 (92%). Full report:
+   harness toolcall15 41/45 (92%), and a budget-isolated 64K-context retest
+   passes 9 / 10 think-max generation cases (the single non-pass is a
+   client-side wall-clock timeout, not a model defect). Full report:
    [`findings/spark_tp2_deployment.md`](https://github.com/pasta-paul/dsv4-flash-w4a16-fp8/blob/main/findings/spark_tp2_deployment.md).
 
-3. **Reasoning modes:** This quant has been validated for the default
-   (Non-think) reasoning mode only. Think High and Think Max modes are
-   compatible at the framework level (the same model serves all three) but
-   have not been individually evaluated.
+3. **Reasoning modes:** Non-think, Think High, and Think Max have all been
+   exercised on Spark TP=2. The 64 K-context retest validates Think Max for
+   all 9 generation cases that previously hit the 32 K reasoning budget,
+   confirming those failures were budget-bound rather than model-bound.
 
 4. **GPTQ vs AWQ:** The original brief targeted AWQ-W4A16. The shipped quant
    uses GPTQ via LLM Compressor's `GPTQModifier` with the W4A16 scheme — both

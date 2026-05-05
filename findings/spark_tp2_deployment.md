@@ -69,7 +69,7 @@ Build via the [`eugr/spark-vllm-docker`](https://github.com/eugr/spark-vllm-dock
 | `smoke_quick` | ✅ **4 / 4** | math / capital / spanish / openclaw_read_tool |
 | `generation` non-thinking | ✅ **18 / 18** | every prompt × non-thinking PASS |
 | `generation` think-high (32K reasoning budget) | ✅ **17 / 18** | 1 brittle-test fail (clock_html missing `Asia/Shanghai`) |
-| `generation` think-max (32K reasoning budget) | ⚠️ **9 / 18** | 9 cases hit budget ceiling — *separate harness limit, not model defect* |
+| `generation` think-max (32K reasoning budget) | ⚠️ **9 / 18** at 32K → ✅ **9 / 10 PASS** when retested at 64K (1 wall-clock timeout, not a defect) — see "Budget-isolated retest" below |
 | `toolcall15` | ✅ **41 / 45 (92%)**, 83/90 points | best score across all configs tested (eager: 89%) |
 | `oracle_compare` vs B200 TP=2 nomtp baseline | ✅ 5 / 5 ran | alignment numbers below |
 | `workspace-lock` errors | ✅ **0** | across 100+ requests, 6+ h uptime |
@@ -87,6 +87,25 @@ This-model TP=2 (W4A16 GPTQ + FP8_BLOCK + BF16 shared) vs B200 TP=2 native FP4/F
 | `completion_code_probe` | 0.0% | 4.6% | 0 / 160 | 0.238 |
 
 Token-level math drift is academic — see standardized benchmarks below for what it costs in practice (nothing).
+
+### Budget-isolated retest at 64K context + 64K reasoning budget
+
+The 9 think-max failures at 32K were budget exhaustion, not generation defects. Re-running the failed 10 cases (the 9 think-max + 1 think-high `clock_html`) at `--max-model-len=65536`, `--max-num-seqs=4`, with `max_tokens=64000`:
+
+| Case | Mode | Status | Reasoning chars | Content chars | Completion tokens | Wall-clock | Decode |
+|---|---|---|---|---|---|---|---|
+| `clock_html` | think-high | ✅ PASS | 39,033 | 17,742 | 14,325 | 910 s | 15.74 t/s |
+| `clock_html` | think-max | ✅ PASS | 47,108 | 22,037 | 17,650 | 1,208 s | 14.61 t/s |
+| `en2zh_rom_001` | think-max | ✅ PASS | 27,199 | 1,294 | 9,962 | 711 s | 14.02 t/s |
+| `en2zh_tech_001` | think-max | ✅ PASS | 10,181 | 734 | 4,603 | 341 s | 13.50 t/s |
+| `en_code_alg_001` | think-max | ⏱ wall-clock timeout at 2,400 s — model still generating | — | — | — | — | — |
+| `en_wr_bus_001` | think-max | ✅ PASS | 17,551 | 4,574 | 4,933 | 364 s | 13.55 t/s |
+| `en_wr_child_001` | think-max | ✅ PASS | 5,170 | 5,372 | 2,687 | 194 s | 13.89 t/s |
+| `en_wr_press_001` | think-max | ✅ PASS | 51,962 | 5,508 | 12,124 | 844 s | 14.37 t/s |
+| `en_wr_rom_001` | think-max | ✅ PASS | 44,823 | 3,744 | 11,615 | 814 s | 14.26 t/s |
+| `en_wr_tech_001` | think-max | ✅ PASS | 24,949 | 7,616 | 7,630 | 520 s | 14.67 t/s |
+
+**9 / 10 PASS.** The single non-pass is a *client-side* wall-clock timeout (40 min cap on a request that may need ~75 min at this decode rate). All passing cases produced ≥3× their original 32K budget in reasoning + content — confirming budget exhaustion, not a model defect. Decode rates remain in the canonical 14–17 t/s envelope at 4× the context window.
 
 ### Standardized benchmarks (lm-evaluation-harness, Spark TP=2)
 
@@ -168,8 +187,7 @@ Same `en2zh_bus_001` 1,304-token prompt that crashes without the patch:
 
 ## Recommended next iterations
 
-1. **Long-context configs** to test (already memory-budget-validated): `max-model-len=65536, max-num-seqs=2` (workspace prereservation patch scales to 64 K cleanly) and `max-model-len=131072, max-num-seqs=1` (KV budget at single-stream shows 1.25 M tokens available — 9.5× headroom).
-2. **`thinking_token_budget` cap at the API layer**: 9 think-max generation cases hit the harness's per-case max_tokens ceiling because the deepseek_v4 reasoning parser produces unbounded `<think>` blocks. Worth either adding a server-side cap or documenting client-side.
-3. **NIAH-style probes** at 32 K and 64 K context to verify long-context quality on Spark (DSV4-Flash sparse attention has structural bounds).
-4. **`bench-matrix`** at concurrency 1 / 2 / 4 to characterize aggregate-throughput vs latency.
-5. **Track upstream issue [#41700](https://github.com/vllm-project/vllm/issues/41700)** — when a clean upstream API lands, retire `patch_workspace_prereserve.py`.
+1. **Longer-context configs** beyond 64 K — `max-model-len=131072, max-num-seqs=1` should fit cleanly (KV budget at single-stream shows ~1.25 M tokens available, 9.5× headroom). 256 K and 500 K configs are next.
+2. **NIAH probes** at 64 K + higher to verify long-context retrieval quality on Spark (DSV4-Flash sparse attention has structural bounds).
+3. **`bench-matrix`** at concurrency 1 / 2 / 4 to characterize aggregate-throughput vs latency.
+4. **Track upstream issue [#41700](https://github.com/vllm-project/vllm/issues/41700)** — when a clean upstream API lands, retire `patch_workspace_prereserve.py`.

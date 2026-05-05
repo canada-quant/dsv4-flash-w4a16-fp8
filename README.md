@@ -132,7 +132,7 @@ vllm serve pastapaul/DeepSeek-V4-Flash-W4A16-FP8 \
 - [x] **Phase 3a** — Dry-run W4A16-FP8 calibration (16 samples) — toolcall15 25/30
 - [x] **Phase 3b** — Full W4A16-FP8 calibration (768 samples) — toolcall15 26/30
 - [x] **Phase 4a** — Harness verify on H200 (TP=2): chat-smoke 10/10, toolcall15 26/30
-- [x] **Phase 4b** — DGX Spark TP=2 deployment ([`findings/spark_tp2_deployment.md`](findings/spark_tp2_deployment.md)): workspace lock diagnosed + patched, harness 4/4 + 18/18 + 41/45, GSM8K 95.37%, HumanEval pass@1 80.49%
+- [x] **Phase 4b** — DGX Spark TP=2 deployment ([`findings/spark_tp2_deployment.md`](findings/spark_tp2_deployment.md)): workspace lock diagnosed + patched, harness 4/4 + 18/18 + 41/45, GSM8K 95.37%, HumanEval pass@1 80.49%, **64K-context retest 9/10 PASS** (think-max budget-isolation confirmed)
 - [x] **Public HF release** at [`pastapaul/DeepSeek-V4-Flash-W4A16-FP8`](https://huggingface.co/pastapaul/DeepSeek-V4-Flash-W4A16-FP8)
 - [x] **Upstream contributions** — workspace allocator bug + patch ([`vllm-project/vllm#41700`](https://github.com/vllm-project/vllm/issues/41700)), Marlin TP scale-sharding ([`#41511`](https://github.com/vllm-project/vllm/issues/41511))
 

@@ -195,7 +195,7 @@ Worker rank 1 needs `--headless` — without it, the worker tries to initialize 
 | Public jasl harness `chat-smoke` | **4 / 4 PASS** |
 | `generation` non-thinking | **18 / 18 PASS** |
 | `generation` think-high (32K reasoning budget) | **17 / 18 PASS** (1 brittle-test fail) |
-| `generation` think-max (32K budget) | 9 / 18 (9 fails are harness budget ceiling, not model defect) |
+| `generation` think-max (32K budget) | 9 / 18 at 32K → ✅ **9 / 10 PASS** at 64K context+budget retest (see findings doc) |
 | `toolcall15` | **41 / 45 (92%)**, 83/90 points — best across all configs tested |
 | `oracle_compare` vs B200 TP=2 nomtp | 5 / 5 ran, alignment numbers in findings doc |
 | **GSM8K 8-shot** | **95.37% ±0.58%** — vs 92.87% on H200 reference (+2.5 pp) |
