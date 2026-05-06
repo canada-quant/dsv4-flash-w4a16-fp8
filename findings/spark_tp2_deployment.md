@@ -191,3 +191,67 @@ Same `en2zh_bus_001` 1,304-token prompt that crashes without the patch:
 2. **NIAH probes** at 64 K + higher to verify long-context retrieval quality on Spark (DSV4-Flash sparse attention has structural bounds).
 3. **`bench-matrix`** at concurrency 1 / 2 / 4 to characterize aggregate-throughput vs latency.
 4. **Track upstream issue [#41700](https://github.com/vllm-project/vllm/issues/41700)** — when a clean upstream API lands, retire `patch_workspace_prereserve.py`.
+
+---
+
+## Phase 4d — long-context graphs-ON sweep against `jasl@0789bc9` (2026-05-05)
+
+The 16 K × 4 recipe above passes harness gates but is bound to short context. Re-validation against `jasl/vllm@0789bc9` (HEAD of `ds4-sm120` at the time, plus the same kylesayrs cherry-pick + `packed_modules_mapping` patch) brings forward four directly-relevant DSV4 commits:
+
+- `1d6f5c4` Reserve DeepSeek V4 prefill workspace during profiling — **the upstreamed version of our local `patch_workspace_prereserve.py`** (issue #41700 closed via this).
+- `a5ce0d7` Fix DeepSeek V4 MLA prefix cache reuse.
+- `e734ace` Release DeepSeek V4 protected prompt refs under pressure.
+- `0789bc9` Keep SM12x paged MQA off DeepGEMM metadata — **the SM12x DeepGEMM fix that finally lets graphs-ON boot at long context on Spark**.
+
+With the new image (`vllm-w4a16-dsv4:sm12fix`), the local `patch_workspace_prereserve.py` is **no longer applied** (workspace pre-reservation is upstream now).
+
+### Graphs-ON sweep (no `--enforce-eager`, all five configs)
+
+| Config | Boot | Smoke decode | NIAH retrieval (4 positions) |
+|---|---|---|---|
+| 16 K × 4 | 338 s | **11.29 t/s** | not run |
+| 128 K × 1 | 308 s | **12.07 t/s** | **4 / 4** at 100 K-token haystack |
+| 256 K × 1 | 306 s | **9.44 t/s** | **4 / 4** at 200 K |
+| 256 K × 2 | 307 s | **8.92 t/s** | **4 / 4** at 200 K |
+| 500 K × 1 | 306 s | **10.12 t/s** | (probe interrupted; engine boot + smoke confirmed) |
+
+Boot is essentially flat (~5 min) across context sizes — graph capture cost does not scale with `max-model-len` on this image. Decode throughput stays in the 8.9–12.1 t/s band; eager mode on this image runs ~2–4 t/s, so the 2–3× lift from graphs-ON is preserved at every context size.
+
+### Mini-suite at the chosen canonical (256 K × 2 graphs-ON): 10 / 10 PASS
+
+Selected 256 K × 2 as the new production canonical for **versatility** — long context (256 K) + multi-stream (2 concurrent seqs).
+
+| Category | Case | Mode | Result | Wall-clock |
+|---|---|---|---|---|
+| smoke | math 7×8 | non-think | ✅ "56" | 9 s |
+| smoke | capital_of_france | non-think | ✅ "Paris" | 11 s |
+| smoke | spanish_greeting | non-think | ✅ "Hola" | 8 s |
+| smoke | openclaw_read_tool | non-think | ✅ tool call emitted | 22 s |
+| generation | en2zh_tech_001 | non-thinking | ✅ 759 chars | 45 s |
+| generation | en2zh_tech_001 | think-high | ✅ 778 chars | 62 s |
+| generation | en_wr_bus_001 | non-thinking | ✅ 6 466 chars | 117 s |
+| generation | en_wr_bus_001 | think-high | ✅ 6 526 chars | 183 s |
+| generation | en_code_be_001 | non-thinking | ✅ 10 155 chars | 261 s |
+| generation | en_code_be_001 | think-high | ✅ 8 528 chars | 661 s |
+
+### Pending (re-run on `ds4-sm120-full`)
+
+Standardized benchmarks (GSM8K, HumanEval, MMLU, full jasl `run_acceptance.sh`) and think-max validation are **not yet measured** on the new image. The `ds4-sm120` branch we built against does not include 11 GB10/SM12x optimization commits that landed on `ds4-sm120-full` (kernel warmups, GB10 fused-MoE config aliases, hardened SM12x paths). Numbers measured on the more conservative branch would understate the achievable Spark performance, so we are re-building against `ds4-sm120-full` HEAD before publishing the standardized-benchmark numbers.
+
+### New canonical recipe (256 K × 2 graphs-ON)
+
+```bash
+vllm serve pastapaul/DeepSeek-V4-Flash-W4A16-FP8 \
+  --served-model-name deepseek-v4-flash --trust-remote-code \
+  --kv-cache-dtype fp8 --block-size 256 \
+  --tokenizer-mode deepseek_v4 \
+  --tool-call-parser deepseek_v4 --enable-auto-tool-choice \
+  --reasoning-parser deepseek_v4 \
+  --max-model-len 262144 \
+  --max-num-seqs 2 --max-num-batched-tokens 8192 \
+  --gpu-memory-utilization 0.92 \
+  --host 0.0.0.0 --port 8888 \
+  -tp 2 --nnodes 2 \
+  --master-addr <HEAD_IP> --master-port 29501 \
+  --node-rank 0    # rank 1 also passes --headless
+```

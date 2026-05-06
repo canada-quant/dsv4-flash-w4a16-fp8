@@ -1,0 +1,134 @@
+{
+  "configs": [
+    {
+      "label": "256k_2seqs_graphs",
+      "max_model_len": 262144,
+      "max_num_seqs": 2,
+      "boot_s": 307.8,
+      "minisuite": {
+        "label": "256k_2seqs_graphs",
+        "rows": [
+          {
+            "category": "smoke",
+            "case": "math_7_times_8",
+            "ok": true,
+            "why": "expect '56' in content -> True",
+            "finish_reason": "stop",
+            "content_chars": 10,
+            "tool_calls": 0,
+            "elapsed_s": 9.2,
+            "completion_tokens": 46
+          },
+          {
+            "category": "smoke",
+            "case": "capital_of_france",
+            "ok": true,
+            "why": "expect 'Paris' in content -> True",
+            "finish_reason": "stop",
+            "content_chars": 35,
+            "tool_calls": 0,
+            "elapsed_s": 11.1,
+            "completion_tokens": 62
+          },
+          {
+            "category": "smoke",
+            "case": "spanish_greeting",
+            "ok": true,
+            "why": "expect any of ['Hola', 'hola'] -> True",
+            "finish_reason": "stop",
+            "content_chars": 158,
+            "tool_calls": 0,
+            "elapsed_s": 8.3,
+            "completion_tokens": 90
+          },
+          {
+            "category": "smoke",
+            "case": "openclaw_read_tool",
+            "ok": true,
+            "why": "got 1 tool_calls",
+            "finish_reason": "tool_calls",
+            "content_chars": 148,
+            "tool_calls": 1,
+            "elapsed_s": 21.8,
+            "completion_tokens": 181
+          },
+          {
+            "category": "generation",
+            "case": "en2zh_tech_001",
+            "mode": "non-thinking",
+            "ok": true,
+            "why": "759 >= 200",
+            "finish_reason": "stop",
+            "content_chars": 759,
+            "reasoning_chars": 0,
+            "elapsed_s": 45.3,
+            "completion_tokens": 459
+          },
+          {
+            "category": "generation",
+            "case": "en2zh_tech_001",
+            "mode": "think-high",
+            "ok": true,
+            "why": "778 >= 200",
+            "finish_reason": "stop",
+            "content_chars": 778,
+            "reasoning_chars": 413,
+            "elapsed_s": 62.5,
+            "completion_tokens": 680
+          },
+          {
+            "category": "generation",
+            "case": "en_wr_bus_001",
+            "mode": "non-thinking",
+            "ok": true,
+            "why": "6466 >= 500",
+            "finish_reason": "stop",
+            "content_chars": 6466,
+            "reasoning_chars": 0,
+            "elapsed_s": 117.5,
+            "completion_tokens": 1382
+          },
+          {
+            "category": "generation",
+            "case": "en_wr_bus_001",
+            "mode": "think-high",
+            "ok": true,
+            "why": "6526 >= 500",
+            "finish_reason": "stop",
+            "content_chars": 6526,
+            "reasoning_chars": 2787,
+            "elapsed_s": 182.8,
+            "completion_tokens": 1922
+          },
+          {
+            "category": "generation",
+            "case": "en_code_be_001",
+            "mode": "non-thinking",
+            "ok": true,
+            "why": "10155 >= 1000",
+            "finish_reason": "stop",
+            "content_chars": 10155,
+            "reasoning_chars": 0,
+            "elapsed_s": 261.4,
+            "completion_tokens": 2732
+          },
+          {
+            "category": "generation",
+            "case": "en_code_be_001",
+            "mode": "think-high",
+            "ok": true,
+            "why": "28345 >= 1000",
+            "finish_reason": "stop",
+            "content_chars": 28345,
+            "reasoning_chars": 3290,
+            "elapsed_s": 660.7,
+            "completion_tokens": 7167
+          }
+        ],
+        "pass_count": 10,
+        "total": 10
+      },
+      "ok": true
+    }
+  ]
+}

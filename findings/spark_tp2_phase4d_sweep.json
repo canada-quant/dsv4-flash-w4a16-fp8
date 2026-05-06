@@ -1,0 +1,281 @@
+{
+  "started_utc": "2026-05-06T00:12:36Z",
+  "vllm_ref": "0789bc9",
+  "image_tag": "vllm-w4a16-dsv4:sm12fix",
+  "phases": [
+    {
+      "phase": "cleanup",
+      "ok": true
+    },
+    {
+      "phase": "build_and_distribute",
+      "ok": true,
+      "s5_image": "vllm-w4a16-dsv4:sm12fix 20.2GB",
+      "s6_image": "vllm-w4a16-dsv4:sm12fix 20.2GB"
+    },
+    {
+      "phase": "16k_4seqs_graphs",
+      "max_model_len": 16384,
+      "max_num_seqs": 4,
+      "enforce_eager": false,
+      "boot_s": 338.2,
+      "smoke": {
+        "ok": true,
+        "elapsed_s": 39.8,
+        "tok_per_s": 11.29,
+        "completion_tokens": 449,
+        "finish_reason": "stop"
+      },
+      "ok": true
+    },
+    {
+      "phase": "128k_1seq_graphs",
+      "max_model_len": 131072,
+      "max_num_seqs": 1,
+      "enforce_eager": false,
+      "boot_s": 307.5,
+      "smoke": {
+        "ok": true,
+        "elapsed_s": 41.4,
+        "tok_per_s": 12.07,
+        "completion_tokens": 500,
+        "finish_reason": "stop"
+      },
+      "probe": {
+        "label": "128k_1seq_graphs",
+        "rc": 0,
+        "rows": [
+          {
+            "probe": "workspace_bomb",
+            "ok": true,
+            "prompt_tokens": 1204,
+            "completion_tokens": 1164,
+            "elapsed_s": 82.3,
+            "tok_per_s": 14.14,
+            "finish_reason": "stop",
+            "content_first_120": "\u534a\u6570\u7684\u5546\u52a1\u4fe1\u51fd\u672c\u5c31\u4e0d\u8be5\u88ab\u5199\u4e0b\uff0c\u800c\u5728\u4f59\u4e0b\u7684\u4fe1\u4ef6\u4e2d\uff0c\u53c8\u6709\u592a\u591a\u5185\u5bb9\u6b8b\u7f3a\u6216\u6761\u7406\u4e0d\u6e05\uff0c\u81f4\u4f7f\u539f\u672c\u4e24\u5c01\u4fe1\u51fd\u4fbf\u53ef\u59a5\u5584\u5904\u7406\u5e76\u5f52\u6863\u7684\u4ea4\u6613\uff0c\u5f80\u5f80\u9700\u8981\u516d\u81f3\u516b\u5c01\u624d\u80fd\u5b8c\u6210\u3002\n\n\u4e00\u5c01\u4f18\u8d28\u7684\u4fe1\u51fd\uff0c\u662f\u6e05\u6670\u601d\u8003\u4e0e\u7cbe\u5fc3\u89c4\u5212\u7684\u4ea7\u7269\u3002\u5c31\u63a8\u9500\u4fe1\u800c\u8a00\uff0c\u6709\u65f6\u9700\u8981\u6570\u5468\u624d\u80fd\u5b9a\u7a3f\uff0c\u4f46\u5bf9\u4e8e\u65e5\u5e38\u901a"
+          },
+          {
+            "probe": "throughput_200tok",
+            "ok": true,
+            "completion_tokens": 250,
+            "elapsed_s": 18.85,
+            "tok_per_s": 13.26
+          },
+          {
+            "probe": "niah",
+            "haystack_tokens": 100000,
+            "position": 0.1,
+            "ok": true,
+            "found": true,
+            "prompt_tokens": 62927,
+            "completion_tokens": 16,
+            "elapsed_s": 270.8,
+            "content_first_120": "The secret access code is **FERRYBLUE-9417**."
+          },
+          {
+            "probe": "niah",
+            "haystack_tokens": 100000,
+            "position": 0.3,
+            "ok": true,
+            "found": true,
+            "prompt_tokens": 62927,
+            "completion_tokens": 16,
+            "elapsed_s": 251.3,
+            "content_first_120": "The secret access code is **FERRYBLUE-9417**."
+          },
+          {
+            "probe": "niah",
+            "haystack_tokens": 100000,
+            "position": 0.65,
+            "ok": true,
+            "found": true,
+            "prompt_tokens": 62927,
+            "completion_tokens": 9,
+            "elapsed_s": 209.9,
+            "content_first_120": "FERRYBLUE-9417"
+          },
+          {
+            "probe": "niah",
+            "haystack_tokens": 100000,
+            "position": 0.92,
+            "ok": true,
+            "found": true,
+            "prompt_tokens": 62927,
+            "completion_tokens": 16,
+            "elapsed_s": 122.2,
+            "content_first_120": "The secret access code is **FERRYBLUE-9417**."
+          }
+        ],
+        "haystack_tokens": 100000
+      },
+      "ok": true
+    },
+    {
+      "phase": "256k_1seq_graphs",
+      "max_model_len": 262144,
+      "max_num_seqs": 1,
+      "enforce_eager": false,
+      "boot_s": 306.0,
+      "smoke": {
+        "ok": true,
+        "elapsed_s": 49.9,
+        "tok_per_s": 9.44,
+        "completion_tokens": 471,
+        "finish_reason": "stop"
+      },
+      "probe": {
+        "label": "256k_1seq_graphs",
+        "rc": 0,
+        "rows": [
+          {
+            "probe": "workspace_bomb",
+            "ok": true,
+            "prompt_tokens": 1204,
+            "completion_tokens": 1087,
+            "elapsed_s": 91.3,
+            "tok_per_s": 11.9,
+            "finish_reason": "stop",
+            "content_first_120": "\u534a\u6570\u7684\u5546\u52a1\u4fe1\u51fd\u6839\u672c\u4e0d\u5e94\u52a8\u7b14\uff0c\u800c\u5269\u4f59\u90e8\u5206\u4e2d\u53c8\u6709\u8bb8\u591a\u6b8b\u7f3a\u4e0d\u5168\u6216\u8bed\u7109\u4e0d\u8be6\uff0c\u5bfc\u81f4\u672c\u53ef\u7528\u4e24\u5c01\u4fe1\u4ef6\u5b8c\u6210\u5e76\u5f52\u6863\u7684\u4ea4\u6613\uff0c\u5f80\u5f80\u9700\u8981\u516d\u81f3\u516b\u5c01\u624d\u80fd\u6536\u5c3e\u3002\n\n\u4e00\u5c01\u5f97\u4f53\u7684\u4fe1\u51fd\u6e90\u4e8e\u6e05\u6670\u7684\u601d\u8def\u4e0e\u5468\u8be6\u7684\u89c4\u5212\u3002\u5c31\u8425\u9500\u51fd\u4ef6\u800c\u8a00\uff0c\u6709\u65f6\u9700\u8017\u8d39\u6570\u5468\u65b9\u53ef\u6210\u6587\uff1b\u4f46\u65e5\u5e38\u4fe1\u51fd\u901a\u5e38\u53ea\u9700\u51e0\u5206\u949f"
+          },
+          {
+            "probe": "throughput_200tok",
+            "ok": true,
+            "completion_tokens": 250,
+            "elapsed_s": 19.82,
+            "tok_per_s": 12.62
+          },
+          {
+            "probe": "niah",
+            "haystack_tokens": 200000,
+            "position": 0.1,
+            "ok": true,
+            "found": true,
+            "prompt_tokens": 126038,
+            "completion_tokens": 16,
+            "elapsed_s": 791.4,
+            "content_first_120": "The secret access code is **FERRYBLUE-9417**."
+          },
+          {
+            "probe": "niah",
+            "haystack_tokens": 200000,
+            "position": 0.3,
+            "ok": true,
+            "found": true,
+            "prompt_tokens": 126038,
+            "completion_tokens": 16,
+            "elapsed_s": 785.8,
+            "content_first_120": "The secret access code is **FERRYBLUE-9417**."
+          },
+          {
+            "probe": "niah",
+            "haystack_tokens": 200000,
+            "position": 0.65,
+            "ok": true,
+            "found": true,
+            "prompt_tokens": 126038,
+            "completion_tokens": 16,
+            "elapsed_s": 784.0,
+            "content_first_120": "The secret access code is **FERRYBLUE-9417**."
+          },
+          {
+            "probe": "niah",
+            "haystack_tokens": 200000,
+            "position": 0.92,
+            "ok": true,
+            "found": true,
+            "prompt_tokens": 126038,
+            "completion_tokens": 16,
+            "elapsed_s": 423.6,
+            "content_first_120": "The secret access code is **FERRYBLUE-9417**."
+          }
+        ],
+        "haystack_tokens": 200000
+      },
+      "ok": true
+    },
+    {
+      "phase": "256k_2seqs_graphs",
+      "max_model_len": 262144,
+      "max_num_seqs": 2,
+      "enforce_eager": false,
+      "boot_s": 307.0,
+      "smoke": {
+        "ok": true,
+        "elapsed_s": 33.7,
+        "tok_per_s": 8.92,
+        "completion_tokens": 301,
+        "finish_reason": "stop"
+      },
+      "probe": {
+        "label": "256k_2seqs_graphs",
+        "rc": 0,
+        "rows": [
+          {
+            "probe": "workspace_bomb",
+            "ok": true,
+            "prompt_tokens": 1204,
+            "completion_tokens": 1125,
+            "elapsed_s": 85.8,
+            "tok_per_s": 13.11,
+            "finish_reason": "stop",
+            "content_first_120": "\u5546\u754c\u6240\u5199\u7684\u4fe1\u51fd\u4e2d\uff0c\u6709\u4e00\u534a\u672c\u5c31\u4e0d\u8be5\u52a8\u7b14\uff1b\u800c\u4f59\u4e0b\u7684\u4e00\u534a\u4e2d\uff0c\u53c8\u6709\u76f8\u5f53\u6570\u91cf\u5185\u5bb9\u6b8b\u7f3a\u6216\u903b\u8f91\u6df7\u4e71\uff0c\u4ee5\u81f4\u672c\u53ef\u4e24\u5c01\u4fe1\u5373\u5b8c\u6210\u5e76\u5f52\u6863\u7684\u4ea4\u6613\uff0c\u5f80\u5f80\u9700\u8981\u516d\u81f3\u516b\u5c01\u65b9\u53ef\u4e86\u7ed3\u3002\n\n\u4e00\u5c01\u4f18\u79c0\u7684\u4fe1\u51fd\uff0c\u6e90\u4e8e\u6e05\u6670\u7684\u601d\u8003\u4e0e\u5468\u5bc6\u7684\u89c4\u5212\u3002\u5c31\u9500\u552e\u4fe1\u51fd\u800c\u8a00\uff0c\u6709\u65f6\u9700\u8017\u65f6\u6570\u5468\u65b9\u80fd\u6210\u6587\uff0c\u4f46\u5e38\u89c4"
+          },
+          {
+            "probe": "throughput_200tok",
+            "ok": true,
+            "completion_tokens": 250,
+            "elapsed_s": 19.91,
+            "tok_per_s": 12.56
+          },
+          {
+            "probe": "niah",
+            "haystack_tokens": 200000,
+            "position": 0.1,
+            "ok": true,
+            "found": true,
+            "prompt_tokens": 126038,
+            "completion_tokens": 16,
+            "elapsed_s": 801.1,
+            "content_first_120": "The secret access code is **FERRYBLUE-9417**."
+          },
+          {
+            "probe": "niah",
+            "haystack_tokens": 200000,
+            "position": 0.3,
+            "ok": true,
+            "found": true,
+            "prompt_tokens": 126038,
+            "completion_tokens": 16,
+            "elapsed_s": 797.4,
+            "content_first_120": "The secret access code is **FERRYBLUE-9417**."
+          },
+          {
+            "probe": "niah",
+            "haystack_tokens": 200000,
+            "position": 0.65,
+            "ok": true,
+            "found": true,
+            "prompt_tokens": 126038,
+            "completion_tokens": 21,
+            "elapsed_s": 810.1,
+            "content_first_120": "Based on the document, the secret access code is **FERRYBLUE-9417**."
+          },
+          {
+            "probe": "niah",
+            "haystack_tokens": 200000,
+            "position": 0.92,
+            "ok": true,
+            "found": true,
+            "prompt_tokens": 126038,
+            "completion_tokens": 22,
+            "elapsed_s": 390.4,
+            "content_first_120": "Based on the document provided, the secret access code is **FERRYBLUE-9417**."
+          }
+        ],
+        "haystack_tokens": 200000
+      },
+      "ok": true
+    }
+  ]
+}
