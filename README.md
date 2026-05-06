@@ -5,13 +5,13 @@ DeepSeek-V4-Flash that actually serves in vLLM**, on Hopper-class GPUs (H200
 SM 9.0) **and DGX Spark GB10 (SM 12.1a)**. Built by stacking three in-flight
 upstream draft PRs and patching the gaps between them.
 
-> **Status (2026-05-04):**
+> **Status (2026-05-05):**
 > - **Phase 3b** — H200 calibration complete (768 samples), full harness PASS, toolcall15 26/30 (87%).
 > - **Phase 4** — DGX Spark TP=2 deployment validated. Workspace lock diagnosed and patched
 >   ([`scripts/patch_workspace_prereserve.py`](scripts/patch_workspace_prereserve.py),
->   upstream [`vllm-project/vllm#41700`](https://github.com/vllm-project/vllm/issues/41700)).
->   Spark **GSM8K 95.37%** (vs H200 92.87%), **HumanEval pass@1 80.49%** (vs H200 54.27%),
->   harness toolcall15 41/45 (92%), 14–17 tok/s decode with CUDA graphs.
+>   landed upstream as [`jasl/vllm@1d6f5c4`](https://github.com/jasl/vllm/commit/1d6f5c4eb)).
+>   Spark **GSM8K 95.37%**, **HumanEval pass@1 80.49%**, harness toolcall15 41/45 (92%), 14–17 tok/s decode with CUDA graphs.
+> - **Phase 5** — Dual RTX PRO 6000 Blackwell (SM 12.0) validated end-to-end on `jasl/vllm@ds4-sm120-experimental` tip (`abad5dc71`). **GSM8K 95.07%**, **HumanEval pass@1 78.05%**, toolcall15 27/30 (90%, single round). **256K × 2 concurrent NIAH passes** — confirms `e734ace5 (release protected prompt refs under pressure)` resolves the Spark 256K×2 stall on Blackwell. Decode 47–48 tok/s per stream (3× Spark). Full report: [`findings/rtxpro6000_blackwell_deployment.md`](findings/rtxpro6000_blackwell_deployment.md).
 > - Live model: **https://huggingface.co/pastapaul/DeepSeek-V4-Flash-W4A16-FP8** (public, Apache-2.0).
 
 ## Why this exists
@@ -31,8 +31,8 @@ As of May 2, 2026:
   and SGLang is not supported currently."*
 
 This project produces a W4A16 GPTQ V4-Flash that **serves in vLLM at TP=2
-on Hopper SM 9.0 (H200) and Blackwell SM 12.1a (DGX Spark GB10) today**, with
-attention quantized to FP8_BLOCK (mirroring RedHat's recipe topology, swapping
+on Hopper SM 9.0 (H200), Blackwell SM 12.1a (DGX Spark GB10), and Blackwell SM 12.0 (RTX PRO 6000) today**,
+with attention quantized to FP8_BLOCK (mirroring RedHat's recipe topology, swapping
 NVFP4 → W4A16 for SM 9.x / 12.x compatibility).
 
 ## Validation (Phase 3b on 8× H200, TP=2)
@@ -48,6 +48,25 @@ NVFP4 → W4A16 for SM 9.x / 12.x compatibility).
 Apples-to-apples on [`jasl/vllm-ds4-sm120-harness`](https://github.com/jasl/vllm-ds4-sm120-harness) HEAD `85aca32`.
 TC-11 (Simple Math) was PARTIAL on baseline AND the 16-sample dryrun; **PASS in Phase 3b** — likely from the larger calibration tightening math-reasoning weight quantization.
 Remaining 2 toolcall15 fails (TC-06 Multi-Value Extraction, TC-08 Conditional Branching) **also fail on the native FP4/FP8 baseline** — these are V4-Flash model-architecture limits, not quantization defects.
+
+## Validation (Phase 5 on dual RTX PRO 6000 Blackwell, TP=2)
+
+Built on the `ds4-sm120-experimental` superset of `ds4-sm120` (commit `abad5dc71` + kylesayrs `f910a73a` cherry-pick + `packed_modules_mapping` patch). Harness HEAD `96785b9`. Single-round chat-smoke / toolcall15; standard lm_eval gates.
+
+| Test | RTX PRO 6000 dual TP=2 | DGX Spark TP=2 (reference) |
+|---|---|---|
+| `chat-smoke quick` | **4 / 4** | 4 / 4 |
+| `toolcall15` | **27 / 30 (90%)** ¹ | 41 / 45 (92%) ² |
+| GSM8K 8-shot, strict-match | **95.07% ±0.60%** | 95.45% ±0.57% |
+| GSM8K 8-shot, flexible-extract | **94.99% ±0.60%** | 95.37% ±0.58% |
+| HumanEval pass@1 (instruct, 0-shot) | **78.05% ±3.24%** | 80.49% ±3.10% |
+| Long-context NIAH 75K → 500K (single stream) | **5 / 5 PASS** | (in flight) |
+| **Long-context NIAH 256K × 2 concurrent** | ✅ **PASS** (377 s, only +21 s vs single) | stalled 2026-05-04 → fix landed in `jasl@e734ace5` |
+| Decode tok/s @ c=1, 1024-in / 1024-out | **47.5** (TPOT mean 20.8 ms) | 14–17 |
+
+¹ Single round, 30 points max. ² 3 thinking-mode rounds × 15 cases = 45 points max — denominators differ but normalized score is the same level.
+
+Full Phase 5 run notes (commit-stack, build flags, two integration issues surfaced — `packed_modules_mapping` still required, FlashInfer JIT mis-parses `12.0a`): [`findings/rtxpro6000_blackwell_deployment.md`](findings/rtxpro6000_blackwell_deployment.md).
 
 ## What's in this repo
 
@@ -134,18 +153,23 @@ vllm serve pastapaul/DeepSeek-V4-Flash-W4A16-FP8 \
 - [x] **Phase 4a** — Harness verify on H200 (TP=2): chat-smoke 10/10, toolcall15 26/30
 - [x] **Phase 4b** — DGX Spark TP=2 deployment ([`findings/spark_tp2_deployment.md`](findings/spark_tp2_deployment.md)): workspace lock diagnosed + patched, harness 4/4 + 18/18 + 41/45, GSM8K 95.37%, HumanEval pass@1 80.49%, **64K-context retest 9/10 PASS** (think-max budget-isolation confirmed)
 - [x] **Phase 4d** — Long-context graphs-ON sweep on `jasl@0789bc9` (workspace patch upstreamed as `1d6f5c4` + SM12x DeepGEMM fix `0789bc9` unblocks graphs-ON at long context). NIAH 4/4 retrieval at **128K, 256K×1, 256K×2** contexts; mini-suite **10/10 PASS** at the new canonical 256K×2 graphs-ON (8.92 t/s decode). Standardized benchmarks deferred pending re-build against `ds4-sm120-full` (the experimental superset with GB10 fused-MoE aliases + kernel warmups).
+- [x] **Phase 5** — Dual RTX PRO 6000 Blackwell (SM 12.0) on `ds4-sm120-experimental` tip `abad5dc71`. Toolcall15 27/30 (90%, single round), GSM8K 95.07%, HumanEval pass@1 78.05%. NIAH single-stream PASS at 75K / 128K / 256K / 500K, **256K × 2 concurrent PASS** (377 s vs 356 s single — confirms `e734ace5` fixes the Spark stall on Blackwell). Decode 47–48 tok/s per stream at c=1 (3× Spark), 84 tok/s aggregate at c=2. Full report: [`findings/rtxpro6000_blackwell_deployment.md`](findings/rtxpro6000_blackwell_deployment.md).
 - [x] **Public HF release** at [`pastapaul/DeepSeek-V4-Flash-W4A16-FP8`](https://huggingface.co/pastapaul/DeepSeek-V4-Flash-W4A16-FP8)
-- [x] **Upstream contributions** — workspace allocator bug + patch ([`vllm-project/vllm#41700`](https://github.com/vllm-project/vllm/issues/41700)), Marlin TP scale-sharding ([`#41511`](https://github.com/vllm-project/vllm/issues/41511))
+- [x] **Upstream contributions** — workspace allocator bug + patch ([`vllm-project/vllm#41700`](https://github.com/vllm-project/vllm/issues/41700) — landed as `jasl/vllm@1d6f5c4`), Marlin TP scale-sharding ([`#41511`](https://github.com/vllm-project/vllm/issues/41511))
 
 ### Standard benchmarks
 
-| Benchmark | Setting | H200 reference | **DGX Spark TP=2** |
-|---|---|---|---|
-| GSM8K | 8-shot, flexible-extract | 92.87% ±0.71% | **95.37% ±0.58%** |
-| HumanEval | pass@1 (instruct, 0-shot, `--confirm_run_unsafe_code`) | 54.27% ±3.9% | **80.49% ±3.10%** |
-| MMLU | 5-shot | 87.27% ±0.27% | (pending) |
+| Benchmark | Setting | 8× H200 (older vllm) | **2× DGX Spark TP=2** | **2× RTX PRO 6000 TP=2** |
+|---|---|---|---|---|
+| GSM8K | 8-shot, flexible-extract | 92.87% ±0.71% | **95.37% ±0.58%** | **94.99% ±0.60%** |
+| GSM8K | 8-shot, strict-match | 42.61% (regex artifact) | 95.45% ±0.57% | **95.07% ±0.60%** |
+| HumanEval | pass@1 (instruct, 0-shot, `--confirm_run_unsafe_code`) | 54.27% ±3.9% ¹ | **80.49% ±3.10%** | **78.05% ±3.24%** |
+| Decode tok/s @ c=1 (1024-in / 1024-out) | TTFT mean / TPOT mean | — | 14–17 / — | **47.5 / 20.8 ms** |
+| MMLU | 5-shot | 87.27% ±0.27% | (pending) | (pending) |
 
-Results updated to the [HF model card](https://huggingface.co/pastapaul/DeepSeek-V4-Flash-W4A16-FP8) as each lands. Note: the HumanEval Spark vs H200 delta is largely measurement methodology — Spark run uses strict pass@1 with code execution; the H200 number on the card used regex extraction that under-counts valid generations.
+Results updated to the [HF model card](https://huggingface.co/pastapaul/DeepSeek-V4-Flash-W4A16-FP8) as each lands.
+
+¹ The H200 numbers are from harness HEAD `85aca32` and `jasl/vllm@428e08e` — an **older vllm build**. The Spark and RTX PRO 6000 numbers are on today's `ds4-sm120-experimental` tip. Treat the H200 ↔ Blackwell deltas as informational, not as a "same software, different hardware" benchmark; the valid same-software comparison is **Spark ↔ RTX PRO 6000** (effectively at parity within stderr).
 
 ## Credits
 

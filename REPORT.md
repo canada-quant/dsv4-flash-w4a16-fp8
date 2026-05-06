@@ -206,3 +206,76 @@ Worker rank 1 needs `--headless` — without it, the worker tries to initialize 
 Full validation report — build provenance, B200 token-level alignment table, operational constraints, recommended next iterations — in [`findings/spark_tp2_deployment.md`](findings/spark_tp2_deployment.md). Canonical launch script: [`scripts/serve_spark_tp2.sh`](scripts/serve_spark_tp2.sh).
 
 This is the first end-to-end validation of `pastapaul/DeepSeek-V4-Flash-W4A16-FP8` on real DGX Spark hardware.
+
+## Phase 5 — Dual RTX PRO 6000 Blackwell deployment validation (2026-05-05)
+
+Validated `pastapaul/DeepSeek-V4-Flash-W4A16-FP8` on the harness HANDOFF's *primary development host*: dual RTX PRO 6000 Blackwell Server (SM 12.0, 96 GB × 2). Built on the `ds4-sm120-experimental` superset of `ds4-sm120` so we exercise commits not yet promoted to the public PR branch — including `e734ace5` (Release DeepSeek V4 protected prompt refs under pressure), the suspected fix for the Spark 256K×2 stall observed in Phase 4d.
+
+### Hardware
+
+- 2× NVIDIA RTX PRO 6000 Blackwell Server, SM 12.0, 96 GB × 2 = 192 GB VRAM
+- Driver 580.126.09, CUDA 12.8 toolkit (`compute_120a`)
+- 60-thread x86_64, 176 GB RAM
+- Brev `violent-azure-yak` (verda)
+
+### Toolchain
+
+- vLLM `0.1.dev16350+g395970dae` built from `jasl/vllm@ds4-sm120-experimental` tip `abad5dc71`
+- Cherry-pick: `neuralmagic/vllm@kylesayrs/deepseek-ct@f910a73a` (auto-merged, 3 files, 22+/15-)
+- Local: `packed_modules_mapping` patch (12-line class-attribute injection) — **still required**
+- Skipped: `patch_workspace_prereserve.py` (now upstream as `1d6f5c4`)
+- torch 2.11.0+cu128, triton 3.6.0, Python 3.12.13
+- Build flags: `TORCH_CUDA_ARCH_LIST=12.0a CUDA_ARCH_LIST=120a MAX_JOBS=24 NVCC_THREADS=4`. Compiles `ENABLE_SCALED_MM_SM120 / NVFP4_SM120 / CUTLASS_MOE_SM120` cutlass kernel paths. Wall ~30 min on 60-core box.
+
+### Two integration issues surfaced
+
+**(i) `packed_modules_mapping` is still required.** Despite kylesayrs `f910a73a` and the experimental branch's reorganization, `DeepseekV4ForCausalLM` doesn't carry a `packed_modules_mapping` class attribute. Without it, model load fails on `find_matched_target` for `model.layers.0.ffn.shared_experts.gate_up_proj` because the recipe ignore list uses `w1/w2/w3` naming and the loader can't fan out the fused name. Correct mapping: `gate_up_proj → ["w1", "w3"]` (matching shared-expert ignore-list naming, not `gate_proj/up_proj`). Wired automatically into the quant config via `vllm/model_executor/model_loader/utils.py:configure_quant_config`.
+
+**(ii) FlashInfer JIT mis-parses `12.0a` arch.** Top-p / top-k sampler routes through FlashInfer's JIT, which raises `RuntimeError: FlashInfer requires GPUs with sm75 or higher` because its arch parser doesn't recognize the `12.0a` token (the actual GPU is sm_120, way above sm_75). Workaround: `VLLM_USE_FLASHINFER_SAMPLER=0`, vLLM falls back to PyTorch-native sampler.
+
+### Long-context probe — 256K × 2 concurrent passes
+
+Serve config: `--max-model-len 524288 --max-num-seqs 2 --gpu-memory-utilization 0.95 --kv-cache-dtype fp8`. KV cache 1,087,973 tokens (2.08× concurrency at 524K).
+
+| Probe | Prompt tokens | Elapsed | Result |
+|---|---|---|---|
+| 75K  (line=2400) | 74,457 | 58.5 s | ✅ PASS |
+| 128K (line=4000) | 124,057 | 119.9 s | ✅ PASS |
+| 256K × 1 (line=8000) | 248,057 | 356.0 s | ✅ PASS |
+| **256K × 2-A** | 248,057 | **377.2 s** | ✅ **PASS** ← concurrent |
+| **256K × 2-B** | 248,057 | **377.1 s** | ✅ **PASS** ← concurrent |
+| 500K × 1 (line=16000) | 496,057 | 1230.7 s | ✅ PASS |
+
+**Headline:** concurrent 256K×2 finishes only ~21 s slower than single 256K×1. With `e734ace5` confirmed effective on Blackwell sm_120, the 256K×2 stall observed on Spark in Phase 4d is fully resolved on the experimental tip.
+
+> Operational note: the throughput logger in vLLM appears to suppress output during single very-long prefill chunked-prefill runs — the 500K probe ran for 20+ minutes with **no** throughput log entries despite GPUs at 98% / 418 W and the request actively progressing. Don't take logger silence as a stall signal; check `nvidia-smi` and the TCP socket state.
+
+### Headline correctness
+
+Harness HEAD `96785b9` (Spark match), temperature 0, top-p 1.
+
+| Test | Result |
+|---|---|
+| `chat-smoke quick` | **4 / 4 PASS** |
+| `toolcall15` (single round, 30 pts max) | **27 / 30 = 90%** (TC-06 fail, TC-07 partial) |
+| GSM8K 8-shot, strict-match | **95.07% ±0.60%** |
+| GSM8K 8-shot, flexible-extract | **94.99% ±0.60%** |
+| HumanEval pass@1 (instruct, 0-shot, `--confirm_run_unsafe_code`) | **78.05% ±3.24%** |
+| `generation-matrix` non-thinking en | 18 / 18 invocations clean |
+| `generation-matrix` think-high en (×3 rounds) | 54 / 54 invocations clean |
+| `generation-matrix` think-max @ 32K en (×3 rounds) | 54 / 54 invocations clean |
+
+The `generation-matrix` runs do not have automatic pass/fail in this harness HEAD; all 126 invocations completed cleanly with `finish_reason=stop`.
+
+### Performance — `vllm bench serve`
+
+| Concurrency | In / Out | Duration | TTFT mean / p99 | TPOT mean / p99 | Output tok/s |
+|---|---|---|---|---|---|
+| 1 | 1024 / 1024 | 430.9 s | 237 ms / 711 ms | 20.8 ms / 21.7 ms | 47.5 |
+| 2 | 2048 / 512  | 121.9 s | 1096 ms / 1900 ms | 21.7 ms / 23.0 ms | 84.0 |
+
+Per-stream decode is rock-stable ~47–48 tok/s (p99 TPOT 22 ms). Aggregate at c=2 is 420 tok/s input+output.
+
+### Full run notes
+
+[`findings/rtxpro6000_blackwell_deployment.md`](findings/rtxpro6000_blackwell_deployment.md) has the full commit-stack, build flags, FlashInfer arch-parser repro, packed-modules-mapping debugging trail, and the operational notes. The harness baseline bundle is at `harness/baselines/20260506_rtxpro6000_tp2_experimental_a4069c4cb/` on the run host; raw artifacts at `/ephemeral/work/runs/2026-05-05-rtx6000/`.
