@@ -1,18 +1,36 @@
 # DeepSeek-V4-Flash → W4A16-FP8 (compressed-tensors, vLLM-deployable)
 
 End-to-end integration work to produce a **W4A16 + FP8_BLOCK quantization of
-DeepSeek-V4-Flash that actually serves in vLLM**, on Hopper-class GPUs (H200
-SM 9.0) **and DGX Spark GB10 (SM 12.1a)**. Built by stacking three in-flight
-upstream draft PRs and patching the gaps between them.
+DeepSeek-V4-Flash that actually serves in vLLM**, validated on Hopper SM 9.0
+(H200) **and Blackwell SM 12.x** (DGX Spark GB10, RTX PRO 6000). Built by
+stacking three in-flight upstream draft PRs and patching the gaps between them.
 
-> **Status (2026-05-05):**
-> - **Phase 3b** — H200 calibration complete (768 samples), full harness PASS, toolcall15 26/30 (87%).
-> - **Phase 4** — DGX Spark TP=2 deployment validated. Workspace lock diagnosed and patched
->   ([`scripts/patch_workspace_prereserve.py`](scripts/patch_workspace_prereserve.py),
->   landed upstream as [`jasl/vllm@1d6f5c4`](https://github.com/jasl/vllm/commit/1d6f5c4eb)).
->   Spark **GSM8K 95.37%**, **HumanEval pass@1 80.49%**, harness toolcall15 41/45 (92%), 14–17 tok/s decode with CUDA graphs.
-> - **Phase 5** — Dual RTX PRO 6000 Blackwell (SM 12.0) validated end-to-end on `jasl/vllm@ds4-sm120-experimental` tip (`abad5dc71`). **GSM8K 95.07%**, **HumanEval pass@1 78.05%**, toolcall15 27/30 (90%, single round). **256K × 2 concurrent NIAH passes** — confirms `e734ace5 (release protected prompt refs under pressure)` resolves the Spark 256K×2 stall on Blackwell. Decode 47–48 tok/s per stream (3× Spark). Full report: [`findings/rtxpro6000_blackwell_deployment.md`](findings/rtxpro6000_blackwell_deployment.md).
-> - Live model: **https://huggingface.co/pastapaul/DeepSeek-V4-Flash-W4A16-FP8** (public, Apache-2.0).
+🤗 Live model: **https://huggingface.co/pastapaul/DeepSeek-V4-Flash-W4A16-FP8** — public, Apache-2.0, no HF token required.
+
+> **Status (2026-05-06):**
+> - Live engine on dual DGX Spark TP=2 graphs-ON serving **1 M-token context**, image `vllm-w4a16-dsv4:exp` from `jasl/vllm@ds4-sm120-experimental`.
+> - **Production-validated** on three SKUs:
+>   - **8× H200 SM 9.0** — calibration + harness baseline (Phase 3b)
+>   - **2× DGX Spark GB10 SM 12.1a** — long-context production (Phase 4d/4e)
+>   - **2× RTX PRO 6000 Blackwell SM 12.0** — workstation Blackwell (Phase 5)
+> - **Headline benchmarks (Spark TP=2, `:exp` build):** GSM8K 95.00 % strict / 94.92 % flex, NIAH 4/4 at 200K-token haystack, mini-suite 10/10, think-max 3/3, decode 12 t/s smoke / 14–15 t/s think-max sustained.
+> - **Workspace pre-reservation patch** we filed (issue [#41700](https://github.com/vllm-project/vllm/issues/41700)) **landed upstream** as `jasl/vllm@1d6f5c4` — only `patch_v4_packed_mapping.py` is still applied locally.
+> - **`ds4-sm120-experimental` superset** adds split-KV sparse-MLA decode + GB10 fused-MoE config aliases over `ds4-sm120` — gives 1.3–3.4× speedup on long-reasoning cases.
+> - **Upstream tracker:** PR [#40991](https://github.com/vllm-project/vllm/pull/40991) (where our Spark validation comment was posted) was closed on 2026-05-06 and replaced by **PR [#41834](https://github.com/vllm-project/vllm/pull/41834)** — *"[New Model][Nvidia] Add SM12x support for DeepSeek V4 Flash with essential fixes"*. The new PR targets a different branch (`codex/ds4-sm120-min-enable`) and we have not yet rebuilt against it; everything in this repo is validated on `jasl/vllm@ds4-sm120-experimental`.
+
+## Quickstart — dual DGX Spark TP=2
+
+Single-file zero-to-serving:
+
+```bash
+curl -fsSLO https://raw.githubusercontent.com/pasta-paul/dsv4-flash-w4a16-fp8/main/scripts/bootstrap_dsv4_spark.sh
+chmod +x bootstrap_dsv4_spark.sh
+./bootstrap_dsv4_spark.sh --head-host spark-a --worker-host spark-b
+```
+
+Idempotent — does SSH-reachability check, model pre-cache (no token), QSFP /30 setup, image build via `eugr/spark-vllm-docker` + our DSV4 patches, scp-distribute to the worker, container launch on both nodes (head rank 0 + worker rank 1 `--headless`), waits for `/health=200`. ~30–50 min the first run (mostly the docker build), ~7 min on re-runs with `--skip-build`.
+
+Walk-through with per-flag explanation: [`findings/QUICKSTART_DUAL_SPARK.md`](findings/QUICKSTART_DUAL_SPARK.md). Manual build recipe: [`scripts/Dockerfile.dsv4-spark`](scripts/Dockerfile.dsv4-spark) + [`scripts/patch_v4_packed_mapping.py`](scripts/patch_v4_packed_mapping.py). Don't want to build? Ping us on the [HF model discussions](https://huggingface.co/pastapaul/DeepSeek-V4-Flash-W4A16-FP8/discussions) for the OCI tarball.
 
 ## Why this exists
 
@@ -34,6 +52,26 @@ This project produces a W4A16 GPTQ V4-Flash that **serves in vLLM at TP=2
 on Hopper SM 9.0 (H200), Blackwell SM 12.1a (DGX Spark GB10), and Blackwell SM 12.0 (RTX PRO 6000) today**,
 with attention quantized to FP8_BLOCK (mirroring RedHat's recipe topology, swapping
 NVFP4 → W4A16 for SM 9.x / 12.x compatibility).
+
+## What's in this repo
+
+| Path | What |
+|---|---|
+| **[`scripts/bootstrap_dsv4_spark.sh`](scripts/bootstrap_dsv4_spark.sh)** | **Single-file zero-to-serving script for dual DGX Spark TP=2.** SSH-orchestrated, idempotent, handles every step from network setup through engine boot. |
+| [`scripts/Dockerfile.dsv4-spark`](scripts/Dockerfile.dsv4-spark) | The actual production Dockerfile — `jasl/vllm@${VLLM_REF}` + kylesayrs PR #41276 cherry-pick + `packed_modules_mapping` patch. Drop into an `eugr/spark-vllm-docker` checkout. |
+| [`scripts/patch_v4_packed_mapping.py`](scripts/patch_v4_packed_mapping.py) | Local patch that adds `packed_modules_mapping` to `DeepseekV4ForCausalLM`. Still required (kylesayrs PR references but doesn't define it). |
+| [`scripts/patch_workspace_prereserve.py`](scripts/patch_workspace_prereserve.py) | **Retired** — landed upstream as `jasl/vllm@1d6f5c4`. Kept for historical reference. |
+| [`scripts/serve_spark_tp2.sh`](scripts/serve_spark_tp2.sh) | Per-rank launch helper (call this once per Spark — used by `bootstrap_dsv4_spark.sh`). |
+| [`findings/QUICKSTART_DUAL_SPARK.md`](findings/QUICKSTART_DUAL_SPARK.md) | Operator-facing manual quickstart with per-flag explanation. |
+| [`findings/spark_tp2_deployment.md`](findings/spark_tp2_deployment.md) | Full Spark validation report — Phases 4b/4c/4d/4e, build provenance, mini-suite + benchmark tables, NIAH evidence, operational constraints. |
+| [`findings/rtxpro6000_blackwell_deployment.md`](findings/rtxpro6000_blackwell_deployment.md) | Phase 5 RTX PRO 6000 Blackwell validation. |
+| [`findings/spark_tp2_phase4e_*.json`](findings/) + [`spark_tp2_phase4e_probes/`](findings/spark_tp2_phase4e_probes/) | Raw evidence files: per-config sweep, mini-suite results, NIAH probe jsonls, GSM8K samples. |
+| [`findings/upstream-issue-marlin-tp-sharding.md`](findings/upstream-issue-marlin-tp-sharding.md) | Root-cause + filed bug for Marlin MoE TP scale-sharding ([vllm-project/vllm#41511](https://github.com/vllm-project/vllm/issues/41511)) — blocks W4A16 MoE under TP > 2. |
+| [`findings/kylesayrs-pr-41276-integration.md`](findings/kylesayrs-pr-41276-integration.md) | Integration notes for kylesayrs's V4 attention path PR — 5 documented gaps with our patches. |
+| [`findings/phase3b-recovery.md`](findings/phase3b-recovery.md) | The H200 OOM + NCCL-timeout journey for the GPTQ calibration: which env vars, why each. |
+| [`patches/`](patches/) | Static patches against upstream — calibration patches (`helpers.py.diff`, `modeling_deepseek_v4.py.diff`) plus the `packed_modules_mapping.diff` for vLLM serving. See [`patches/VERSIONS.md`](patches/VERSIONS.md). |
+| `REPORT.md` | Full phase-by-phase mission log (setup → native baseline → dequant → calibration → serve attempts → harness results). |
+| `model-card-draft.md` | In-repo mirror of the published HF model card. |
 
 ## Validation (Phase 3b on 8× H200, TP=2)
 
@@ -113,35 +151,48 @@ See `findings/phase3b-recovery.md` for **why** each env var is required (every o
 
 ## Build for vLLM serving
 
-Serving requires:
-- [`jasl/vllm@ds4-sm120`](https://github.com/jasl/vllm/tree/ds4-sm120) (PR #40991) base
-- Cherry-pick the `kylesayrs/deepseek-ct` branch from [`neuralmagic/vllm`](https://github.com/neuralmagic/vllm/tree/kylesayrs/deepseek-ct) — vLLM PR #41276, branch `kylesayrs/deepseek-ct` in the `neuralmagic/vllm` fork (commit `f910a73a`). **Note**: this is a branch in the `neuralmagic` organization's vLLM fork; not in `kylesayrs`'s personal fork.
-- Apply `patches/packed_modules_mapping.diff` to add the `packed_modules_mapping` class attribute that PR #41276 references but does not define.
+For dual DGX Spark TP=2 the bootstrap script above does this for you. Manual build for any other TP=2 hardware:
+
+Required pieces (stacked):
+- **`jasl/vllm@ds4-sm120-experimental`** — current branch with the SM12x DSV4 work + the experimental superset (split-KV decode, GB10 fused-MoE config aliases, tuned MLA graph defaults). Use `ds4-sm120` instead if you want the more-conservative PR-tracked branch (~6 commits behind).
+- **Cherry-pick** `f910a73a93` from `neuralmagic/vllm@kylesayrs/deepseek-ct` (vLLM PR #41276 — the V4 attention compressed-tensors path).
+- **Patch** [`scripts/patch_v4_packed_mapping.py`](scripts/patch_v4_packed_mapping.py) — adds `packed_modules_mapping` to `DeepseekV4ForCausalLM`. Still needed: PR #41276 references this attribute but doesn't define it.
+- The workspace pre-reservation patch is **no longer needed** — landed upstream as `jasl/vllm@1d6f5c4` (closed our [issue #41700](https://github.com/vllm-project/vllm/issues/41700)).
 
 ```bash
-git clone https://github.com/jasl/vllm.git -b ds4-sm120 vllm
+git clone https://github.com/jasl/vllm.git -b ds4-sm120-experimental vllm
 cd vllm
 git remote add neuralmagic https://github.com/neuralmagic/vllm.git
-git fetch neuralmagic kylesayrs/deepseek-ct
-git cherry-pick f910a73a   # the "support ct quantization" commit
-patch -p1 < ../patches/packed_modules_mapping.diff
+git fetch --depth=200 neuralmagic kylesayrs/deepseek-ct
+git cherry-pick f910a73a93     # support ct quantization
+python3 ../scripts/patch_v4_packed_mapping.py vllm/model_executor/models/deepseek_v4.py
 pip install -e . --no-build-isolation
 ```
 
-Then:
+Production canonical (Phase 4e — 1 M context graphs-ON, single-stream):
+
 ```bash
 vllm serve pastapaul/DeepSeek-V4-Flash-W4A16-FP8 \
+    --served-model-name DSV4-W4A16-FP8 deepseek-ai/DeepSeek-V4-Flash deepseek-v4-flash \
     --tensor-parallel-size 2 \
-    --kv-cache-dtype fp8 --block-size 256 --max-model-len 16384 \
-    --gpu-memory-utilization 0.85 \
+    --kv-cache-dtype fp8 --block-size 256 \
+    --max-model-len 1048576 \
+    --max-num-seqs 1 --max-num-batched-tokens 8192 \
+    --gpu-memory-utilization 0.90 \
     --tokenizer-mode deepseek_v4 \
-    --tool-call-parser deepseek_v4 \
-    --enable-auto-tool-choice \
+    --tool-call-parser deepseek_v4 --enable-auto-tool-choice \
     --reasoning-parser deepseek_v4 \
+    --compilation-config '{"cudagraph_mode":"FULL_AND_PIECEWISE","custom_ops":["all"]}' \
     --trust-remote-code
 ```
 
-**Important — TP limit:** TP=1 OOMs on a single 141 GB H200. **TP=2 works.** TP ≥ 4 hits the upstream Marlin MoE TP scale-sharding bug ([vllm-project/vllm#41511](https://github.com/vllm-project/vllm/issues/41511)) — until that's fixed, this model is TP=2-only.
+For multi-stream + long context, drop `--max-model-len` to `262144` and `--max-num-seqs` to `2` (Phase 4d's previous canonical, mini-suite 10/10 PASS). For maximum decode speed at short context, drop to `--max-model-len 16384 --max-num-seqs 4 --gpu-memory-utilization 0.92` (Phase 4b's recipe — 14–17 t/s decode).
+
+**Two flag gotchas worth flagging:**
+- `--served-model-name` takes multiple values per single flag, **not** repeated flags. `--served-model-name A --served-model-name B` silently keeps only the last value. Use space-separated form.
+- `--gpu-memory-utilization=0.90` (not 0.92) on the experimental build — prefix-cache + split-KV reservations push past the 0.92 boundary on first boot.
+
+**TP limit:** TP=1 OOMs on a single 141 GB H200. **TP=2 works.** TP ≥ 4 hits the upstream Marlin MoE TP scale-sharding bug ([vllm-project/vllm#41511](https://github.com/vllm-project/vllm/issues/41511)) — until that's fixed, this model is TP=2-only.
 
 ## Roadmap status
 
