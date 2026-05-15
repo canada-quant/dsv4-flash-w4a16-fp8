@@ -30,6 +30,21 @@ Generated 2026-05-01T23:12:22Z
 - branch: ds4-sm120
 - HEAD: 428e08ec2b1a828e2b8223c09b643559ab9ca9ee
 
+### vLLM compressed-tensors support (kylesayrs/deepseek-ct — vendored)
+- upstream repo: https://github.com/neuralmagic/vllm.git
+- upstream branch: kylesayrs/deepseek-ct
+- upstream commit (current): d09eeb4988acdeea17ab58eabe49197b11c6cc8a ("support ct quantization", 2026-05-01)
+- upstream commit (original, gone): f910a73a93 — force-pushed out of history when Kyle rebased the
+  branch. See issue #1 (ZhouHr, 2026-05-08): `fatal: bad revision 'f910a73a93'`.
+- vendored as: scripts/kylesayrs-deepseek-ct.patch  (rebased onto jasl/vllm@ds4-sm120; applies with
+  plain `git apply`, no 3-way merge required)
+- newer commits on upstream branch NOT included:
+    322ca21573bdc8f9953c8a91813420ad55c5d025  "revoke support for fused_wkv_wgate"  (2026-05-07)
+    22f6da8c96d7c17c7f1e024f9b779eb99919e3ea  "use config ignored_layers"           (2026-05-08)
+  Excluded because `322ca2157` removes fused_wkv_wgate, which our packed_modules_mapping.diff
+  still declares — pulling it in would require also dropping that mapping entry. Revisit if/when
+  Kyle's branch is merged upstream as a PR.
+
 ## Patches
 
 ### helpers.py.diff
@@ -55,6 +70,19 @@ Adapted from kylesayrs/transformers-v5 examples/quantizing_moe/deepseek_v4_examp
 - ignore: lm_head, re:.*self_attn.*, re:.*shared_experts.* (routed experts NOT ignored)
 - calibration: HuggingFaceH4/ultrachat_200k with V4 manual chat encoding
 - launch: torchrun --nproc-per-node 8
+
+### scripts/kylesayrs-deepseek-ct.patch  (vendored vLLM patch, build-time)
+Pre-rebased onto jasl/vllm@ds4-sm120 from neuralmagic/vllm@kylesayrs/deepseek-ct
+commit d09eeb4988acdeea17ab58eabe49197b11c6cc8a. Adds DeepseekCompressor /
+DeepseekV4Attention / DeepseekV4ForCausalLM hooks needed for the compressed-tensors
+W4A16 weight loader. Applied by `git am` in Dockerfile.dsv4-spark immediately after
+the jasl/vllm checkout, replacing the previous live cherry-pick that broke when Kyle
+force-pushed his branch (issue #1). Authorship preserved as Kyle Sayers.
+- touches: vllm/model_executor/layers/deepseek_compressor.py (+1 -1)
+           vllm/model_executor/layers/deepseek_v4_attention.py (+12 -12)
+           vllm/model_executor/models/deepseek_v4.py (+9 -2)
+- packed_modules_mapping still injected separately via scripts/patch_v4_packed_mapping.py
+  because the upstream commit references self.packed_modules_mapping but does not define it.
 
 ## How to reproduce on a fresh box
 1. Clone llm-compressor at the HEAD above, checkout kylesayrs/transformers-v5.
