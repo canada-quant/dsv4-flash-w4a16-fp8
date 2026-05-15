@@ -1,0 +1,124 @@
+From 8a2285ee24257b54fd2dc33a74ed3371b31420b1 Mon Sep 17 00:00:00 2001
+From: Kyle Sayers <kylesayrs@gmail.com>
+Date: Fri, 1 May 2026 13:32:31 -0400
+Subject: [PATCH] support ct quantization
+
+Signed-off-by: Kyle Sayers <kylesayrs@gmail.com>
+
+Vendored & rebased onto jasl/vllm@ds4-sm120 from
+neuralmagic/vllm@kylesayrs/deepseek-ct commit d09eeb4988acdeea17ab58eabe49197b11c6cc8a,
+the rebased successor of f910a73a93 (force-pushed out of history).
+See pasta-paul/dsv4-flash-w4a16-fp8 patches/VERSIONS.md.
+---
+ .../layers/deepseek_compressor.py             |  2 +-
+ .../layers/deepseek_v4_attention.py           | 24 +++++++++----------
+ vllm/model_executor/models/deepseek_v4.py     | 11 +++++++--
+ 3 files changed, 22 insertions(+), 15 deletions(-)
+
+diff --git a/vllm/model_executor/layers/deepseek_compressor.py b/vllm/model_executor/layers/deepseek_compressor.py
+index 48628fe..5f57d73 100644
+--- a/vllm/model_executor/layers/deepseek_compressor.py
++++ b/vllm/model_executor/layers/deepseek_compressor.py
+@@ -221,7 +221,7 @@ class DeepseekCompressor(nn.Module):
+             [self.coff * self.head_dim, self.coff * self.head_dim],
+             bias=False,
+             return_bias=False,
+-            quant_config=None,
++            quant_config=vllm_config.quant_config,
+             disable_tp=True,
+             prefix=f"{prefix}.fused_wkv_wgate",
+         )
+diff --git a/vllm/model_executor/layers/deepseek_v4_attention.py b/vllm/model_executor/layers/deepseek_v4_attention.py
+index ba520ce..ffa9d7b 100644
+--- a/vllm/model_executor/layers/deepseek_v4_attention.py
++++ b/vllm/model_executor/layers/deepseek_v4_attention.py
+@@ -393,6 +393,14 @@ class DeepseekV4MultiHeadLatentAttentionWrapper(PluggableLayer):
+                 k_cache_prefix=self.mla_attn.prefix,
+             )
+ 
++        # TODO: For now, model requires fp8 quantization for attention
++        if hasattr(self.wo_a, "weight_scale_inv"):
++            self.wo_scale_name = "weight_scale_inv"
++        elif hasattr(self.wo_a, "weight_scale"):
++            self.wo_scale_name = "weight_scale"
++        else:
++            raise NotImplementedError("DeepSeekV4 requires FP8 attention quantization")
++
+     def forward(
+         self,
+         positions: torch.Tensor,
+@@ -443,7 +451,7 @@ class DeepseekV4MultiHeadLatentAttentionWrapper(PluggableLayer):
+         )
+ 
+         wo_a_fp8 = self.wo_a.weight
+-        wo_a_scale = self.wo_a.weight_scale_inv
++        wo_a_scale = getattr(self.wo_a, self.wo_scale_name)
+ 
+         z = _allocate_deepseek_v4_wo_a_output(
+             num_tokens,
+@@ -481,11 +489,7 @@ class DeepseekV4MultiHeadLatentAttentionWrapper(PluggableLayer):
+             compressor = self.compressor
+ 
+             def compressor_kv_score() -> torch.Tensor:
+-                return torch.mm(
+-                    hidden_states,
+-                    compressor.fused_wkv_wgate.weight.T,
+-                    out_dtype=torch.float32,
+-                )
++                return compressor.fused_wkv_wgate(hidden_states)
+ 
+             aux_fns[0] = compressor_kv_score
+ 
+@@ -498,11 +502,7 @@ class DeepseekV4MultiHeadLatentAttentionWrapper(PluggableLayer):
+                 return weights
+ 
+             def indexer_compressor_kv_score() -> torch.Tensor:
+-                return torch.mm(
+-                    hidden_states,
+-                    indexer.compressor.fused_wkv_wgate.weight.T,
+-                    out_dtype=torch.float32,
+-                )
++                return indexer.compressor.fused_wkv_wgate(hidden_states)
+ 
+             aux_fns[1] = indexer_weights_proj
+             aux_fns[2] = indexer_compressor_kv_score
+@@ -1777,7 +1777,7 @@ class DeepseekV4Indexer(nn.Module):
+             hidden_size,
+             self.n_head,
+             bias=False,
+-            quant_config=None,
++            quant_config=quant_config,
+             prefix=f"{prefix}.weights_proj",
+         )
+         self.k_norm = LayerNorm(self.head_dim, eps=1e-6)
+diff --git a/vllm/model_executor/models/deepseek_v4.py b/vllm/model_executor/models/deepseek_v4.py
+index 1c3adb3..17ba377 100644
+--- a/vllm/model_executor/models/deepseek_v4.py
++++ b/vllm/model_executor/models/deepseek_v4.py
+@@ -1021,7 +1021,14 @@ class DeepseekV4Attention(nn.Module):
+             prefix=f"{prefix}.wo_b",
+         )
+         self.softmax_scale = self.head_dim**-0.5
+-        self.scale_fmt = config.quantization_config["scale_fmt"]
++        # scale_fmt is only used in the indexer (for C4A layers), not in
++        # the main attention. Default to "ue8m0" for compatibility.
++        self.scale_fmt = (
++            config.quantization_config.get("scale_fmt", "ue8m0")
++            if hasattr(config, "quantization_config")
++            and isinstance(config.quantization_config, dict)
++            else "ue8m0"
++        )
+ 
+         self.rope_parameters = config.rope_scaling
+ 
+@@ -1487,7 +1494,7 @@ class DeepseekV4Model(nn.Module):
+         first_layer = next(iter(islice(self.layers, self.start_layer, self.end_layer)))
+         if first_layer.ffn.use_mega_moe:
+             return make_deepseek_v4_expert_params_mapping(self.config.n_routed_experts)
+-        # Params for weights, fp8 weight scales, fp8 activation scales
++        # Params for unfused moe weights
+         # (param_name, weight_name, expert_id, shard_id)
+         return FusedMoE.make_expert_params_mapping(
+             self,
+-- 
+2.43.0
