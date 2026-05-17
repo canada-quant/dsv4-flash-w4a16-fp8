@@ -28,9 +28,9 @@ chmod +x bootstrap_dsv4_spark.sh
 ./bootstrap_dsv4_spark.sh --head-host spark-a --worker-host spark-b
 ```
 
-Idempotent — does SSH-reachability check, model pre-cache (no token), QSFP /30 setup, image build via `eugr/spark-vllm-docker` + our DSV4 patches, scp-distribute to the worker, container launch on both nodes (head rank 0 + worker rank 1 `--headless`), waits for `/health=200`. ~30–50 min the first run (mostly the docker build), ~7 min on re-runs with `--skip-build`.
+Idempotent — does SSH-reachability check, model pre-cache (no token, always `huggingface-cli download` so half-cached states resume rather than pass silently), QSFP /30 setup, image build via `eugr/spark-vllm-docker` + our DSV4 patches (Dockerfile + kylesayrs patch + packed_modules patch all curled into the build context), scp-distribute to the worker, container launch on both nodes (head rank 0 + worker rank 1 `--headless`), waits for `/health=200`. ~30–50 min the first run (mostly the docker build), ~7 min on re-runs with `--skip-build`. On success writes `/workspace/build-metadata.yaml` to `/tmp/dsv4-spark-build-metadata-*.yaml` for bug reports; on failure dumps last-300-line container logs, env, `nvidia-smi`, and `dmesg` tail from **both nodes**.
 
-Walk-through with per-flag explanation: [`findings/QUICKSTART_DUAL_SPARK.md`](findings/QUICKSTART_DUAL_SPARK.md). Manual build recipe: [`scripts/Dockerfile.dsv4-spark`](scripts/Dockerfile.dsv4-spark) + [`scripts/patch_v4_packed_mapping.py`](scripts/patch_v4_packed_mapping.py). Don't want to build? Ping us on the [HF model discussions](https://huggingface.co/pastapaul/DeepSeek-V4-Flash-W4A16-FP8/discussions) for the OCI tarball.
+Walk-through with per-flag explanation: [`findings/QUICKSTART_DUAL_SPARK.md`](findings/QUICKSTART_DUAL_SPARK.md). Manual build recipe: [`scripts/Dockerfile.dsv4-spark`](scripts/Dockerfile.dsv4-spark) + [`scripts/kylesayrs-deepseek-ct.patch`](scripts/kylesayrs-deepseek-ct.patch) + [`scripts/patch_v4_packed_mapping.py`](scripts/patch_v4_packed_mapping.py). Don't want to build? Ping us on the [HF model discussions](https://huggingface.co/pastapaul/DeepSeek-V4-Flash-W4A16-FP8/discussions) for the OCI tarball.
 
 ## Why this exists
 
@@ -57,12 +57,12 @@ NVFP4 → W4A16 for SM 9.x / 12.x compatibility).
 
 | Path | What |
 |---|---|
-| **[`scripts/bootstrap_dsv4_spark.sh`](scripts/bootstrap_dsv4_spark.sh)** | **Single-file zero-to-serving script for dual DGX Spark TP=2.** SSH-orchestrated, idempotent, handles every step from network setup through engine boot. |
+| **[`scripts/bootstrap_dsv4_spark.sh`](scripts/bootstrap_dsv4_spark.sh)** | **Single-file zero-to-serving script for dual DGX Spark TP=2.** SSH-orchestrated, idempotent, handles every step from network setup through engine boot. Prints build provenance on success and dumps dual-node diagnostics on failure. |
 | [`scripts/Dockerfile.dsv4-spark`](scripts/Dockerfile.dsv4-spark) | The actual production Dockerfile — `jasl/vllm@${VLLM_REF}` + vendored kylesayrs deepseek-ct patch + `packed_modules_mapping` patch. Drop into an `eugr/spark-vllm-docker` checkout. |
 | [`scripts/kylesayrs-deepseek-ct.patch`](scripts/kylesayrs-deepseek-ct.patch) | Vendored vLLM patch (kylesayrs PR #41276 work, pre-rebased onto `jasl/vllm@ds4-sm120`). Pinned by content, not SHA — see [findings/kylesayrs-pr-41276-integration.md#sha-rebase-recovery-issue-1-2026-05-08](findings/kylesayrs-pr-41276-integration.md). |
 | [`scripts/patch_v4_packed_mapping.py`](scripts/patch_v4_packed_mapping.py) | Local patch that adds `packed_modules_mapping` to `DeepseekV4ForCausalLM`. Still required (kylesayrs PR references but doesn't define it). |
 | [`scripts/patch_workspace_prereserve.py`](scripts/patch_workspace_prereserve.py) | **Retired** — landed upstream as `jasl/vllm@1d6f5c4`. Kept for historical reference. |
-| [`scripts/serve_spark_tp2.sh`](scripts/serve_spark_tp2.sh) | Per-rank launch helper (call this once per Spark — used by `bootstrap_dsv4_spark.sh`). |
+| [`scripts/serve_spark_tp2.sh`](scripts/serve_spark_tp2.sh) | Standalone per-rank launch helper for manual operation. The equivalent commands are inlined directly in `bootstrap_dsv4_spark.sh`. |
 | [`findings/QUICKSTART_DUAL_SPARK.md`](findings/QUICKSTART_DUAL_SPARK.md) | Operator-facing manual quickstart with per-flag explanation. |
 | [`findings/spark_tp2_deployment.md`](findings/spark_tp2_deployment.md) | Full Spark validation report — Phases 4b/4c/4d/4e, build provenance, mini-suite + benchmark tables, NIAH evidence, operational constraints. |
 | [`findings/rtxpro6000_blackwell_deployment.md`](findings/rtxpro6000_blackwell_deployment.md) | Phase 5 RTX PRO 6000 Blackwell validation. |
@@ -106,18 +106,6 @@ Built on the `ds4-sm120-experimental` superset of `ds4-sm120` (commit `abad5dc71
 ¹ Single round, 30 points max. ² 3 thinking-mode rounds × 15 cases = 45 points max — denominators differ but normalized score is the same level.
 
 Full Phase 5 run notes (commit-stack, build flags, two integration issues surfaced — `packed_modules_mapping` still required, FlashInfer JIT mis-parses `12.0a`): [`findings/rtxpro6000_blackwell_deployment.md`](findings/rtxpro6000_blackwell_deployment.md).
-
-## What's in this repo
-
-| Path | What |
-|---|---|
-| `REPORT.md` | Full phase-by-phase mission log: setup → native baseline → dequant → calibration → vLLM serve attempts → harness results → decisions and pivots. |
-| `model-card-draft.md` | Pre-publish draft of the HF model card. The published version lives at https://huggingface.co/pastapaul/DeepSeek-V4-Flash-W4A16-FP8. |
-| `findings/upstream-issue-marlin-tp-sharding.md` | Root-cause for a Marlin MoE kernel TP scale-sharding bug discovered during integration. Empirical TP=1/2/8 table, suggested fix location. **Filed upstream as [vllm-project/vllm#41511](https://github.com/vllm-project/vllm/issues/41511) on 2026-05-02.** Blocks all compressed-tensors W4A16 MoE deployments under TP > 2 on every GPU architecture. |
-| `findings/kylesayrs-pr-41276-integration.md` | Detailed integration notes for the [neuralmagic/vllm](https://github.com/neuralmagic/vllm) `kylesayrs/deepseek-ct` branch (PR #41276) — 5 documented upstream gaps with our patches. |
-| `findings/phase3b-recovery.md` | The Phase 3b OOM + NCCL-timeout journey: what failed, what worked, and the exact env+recipe combination required to GPTQ-calibrate V4-Flash at scale on 8× H200 without crashes. |
-| `patches/` | Static patches against upstream (see [`patches/VERSIONS.md`](patches/VERSIONS.md)). Includes calibration patches (`helpers.py.diff`, `modeling_deepseek_v4.py.diff`) and the `packed_modules_mapping.diff` for vLLM serving. |
-| `scripts/` | Working scripts in two categories: **calibration** (run on AWS H200 box) and **serve** (run on inference target — H200 here, applicable to DGX Spark with kernel updates). |
 
 ## Build for AWS calibration
 
@@ -188,9 +176,10 @@ vllm serve pastapaul/DeepSeek-V4-Flash-W4A16-FP8 \
 
 For multi-stream + long context, drop `--max-model-len` to `262144` and `--max-num-seqs` to `2` (Phase 4d's previous canonical, mini-suite 10/10 PASS). For maximum decode speed at short context, drop to `--max-model-len 16384 --max-num-seqs 4 --gpu-memory-utilization 0.92` (Phase 4b's recipe — 14–17 t/s decode).
 
-**Two flag gotchas worth flagging:**
+**Three flag/env gotchas worth flagging:**
 - `--served-model-name` takes multiple values per single flag, **not** repeated flags. `--served-model-name A --served-model-name B` silently keeps only the last value. Use space-separated form.
 - `--gpu-memory-utilization=0.90` (not 0.92) on the experimental build — prefix-cache + split-KV reservations push past the 0.92 boundary on first boot.
+- `VLLM_TRITON_MLA_SPARSE_HEAD_BLOCK_SIZE=4` is **mandatory at runtime** — without it sparse-MLA warmup can crash with `RuntimeError: Triton Error [CUDA]: an illegal memory access was encountered` in `_dequantize_and_gather_k_kernel`. See [`findings/QUICKSTART_DUAL_SPARK.md` §4](findings/QUICKSTART_DUAL_SPARK.md#4-launch--head--worker) for the full env block.
 
 **TP limit:** TP=1 OOMs on a single 141 GB H200. **TP=2 works.** TP ≥ 4 hits the upstream Marlin MoE TP scale-sharding bug ([vllm-project/vllm#41511](https://github.com/vllm-project/vllm/issues/41511)) — until that's fixed, this model is TP=2-only.
 
