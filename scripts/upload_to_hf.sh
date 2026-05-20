@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Phase 5: upload AWQ-W4A16 model to HuggingFace pasta-paul/DeepSeek-V4-Flash-AWQ-W4A16
+# Phase 5: upload AWQ-W4A16 model to HuggingFace canada-quant/DeepSeek-V4-Flash-W4A16-FP8
 #
 # Requires HF_TOKEN env var or `huggingface-cli login` already run.
 # Never echo or log the token.
@@ -10,7 +10,7 @@ echo "==== upload_to_hf.sh start $(date -u +%FT%TZ) ===="
 
 source /opt/pytorch/bin/activate
 
-REPO="pastapaul/DeepSeek-V4-Flash-AWQ-W4A16"
+REPO="canada-quant/DeepSeek-V4-Flash-W4A16-FP8"
 SRC="/workspace/model-awq-w4a16"
 
 if [ -z "${HF_TOKEN:-}" ] && [ ! -f ~/.cache/huggingface/token ]; then

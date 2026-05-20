@@ -186,7 +186,7 @@ Note that TP=2 deployments work because the kernel's wrong-believed `group_size=
 ### Repro artifacts
 
 Full integration findings, scripts, and reproduction details:
-https://github.com/pasta-paul/dsv4-flash-awq-w4a16
+https://github.com/canada-quant/dsv4-flash-w4a16-fp8
 
 Specifically:
 - Recipe: `scripts/quantize_v4_w4a16.py`
@@ -215,7 +215,7 @@ Posted at https://github.com/vllm-project/vllm/pull/40991#issuecomment-436427844
 >
 > Per @wuwenthink's TP=2 SM120 harness report (May 1), chat-smoke coding 0/2 — our H200 TP=2 W4A16 with the same harness defaults got coding 2/2 PASS. So the SM12x coding 0/2 is reproducibly an SM12x-specific issue (kernel correctness, not reasoning-token-exhaustion as I'd previously speculated).
 >
-> Full integration writeup: pasta-paul/dsv4-flash-awq-w4a16 — 5 distinct upstream gaps documented during this work, plus the Marlin TP fix surface, plus the published model at canada-quant/DeepSeek-V4-Flash-W4A16-FP8.
+> Full integration writeup: canada-quant/dsv4-flash-w4a16-fp8 — 5 distinct upstream gaps documented during this work, plus the Marlin TP fix surface, plus the published model at canada-quant/DeepSeek-V4-Flash-W4A16-FP8.
 >
 > /cc @jasl @kylesayrs @dsikka
 
