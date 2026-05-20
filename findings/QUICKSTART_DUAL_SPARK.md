@@ -1,6 +1,6 @@
 # Quickstart — DSV4-Flash W4A16-FP8 on dual DGX Spark TP=2
 
-End-to-end recipe to bring up `pastapaul/DeepSeek-V4-Flash-W4A16-FP8` on two DGX Spark GB10 boxes connected over QSFP, serving up to 1 M-token context graphs-ON.
+End-to-end recipe to bring up `canada-quant/DeepSeek-V4-Flash-W4A16-FP8` on two DGX Spark GB10 boxes connected over QSFP, serving up to 1 M-token context graphs-ON.
 
 The model is **public, self-contained, no HF token required**. You only need access to two DGX Spark GB10 nodes and the QSFP cable between them.
 
@@ -17,7 +17,7 @@ No HF token needed for the quant. (The base `deepseek-ai/DeepSeek-V4-Flash` is g
 If you just want it running:
 
 ```bash
-curl -fsSLO https://raw.githubusercontent.com/pasta-paul/dsv4-flash-w4a16-fp8/main/scripts/bootstrap_dsv4_spark.sh
+curl -fsSLO https://raw.githubusercontent.com/canada-quant/dsv4-flash-w4a16-fp8/main/scripts/bootstrap_dsv4_spark.sh
 chmod +x bootstrap_dsv4_spark.sh
 ./bootstrap_dsv4_spark.sh --head-host spark-a --worker-host spark-b
 ```
@@ -55,7 +55,7 @@ The model is 142 GiB. Each Spark loads from its own local HF cache.
 
 ```bash
 # On EACH Spark (no token needed — public quant)
-huggingface-cli download pastapaul/DeepSeek-V4-Flash-W4A16-FP8
+huggingface-cli download canada-quant/DeepSeek-V4-Flash-W4A16-FP8
 ```
 
 Disk path: `~/.cache/huggingface/hub/models--pastapaul--DeepSeek-V4-Flash-W4A16-FP8/`. `huggingface-cli download` is idempotent and resumes via xet — re-run after any interruption rather than trying to check completeness manually. A half-cached model can pass naive "is any .safetensors present?" checks and then crash the engine at kernel-warmup time with corrupt KV-cache backing tensors.
@@ -74,9 +74,9 @@ cd spark-vllm-docker
 # Get our DSV4-specific Dockerfile + the two patches the Dockerfile expects in the build context.
 # All three are required — the Dockerfile fails with "kylesayrs-deepseek-ct.patch: not found"
 # at the COPY step if you skip the patch curl.
-curl -O https://raw.githubusercontent.com/pasta-paul/dsv4-flash-w4a16-fp8/main/scripts/Dockerfile.dsv4-spark
-curl -O https://raw.githubusercontent.com/pasta-paul/dsv4-flash-w4a16-fp8/main/scripts/kylesayrs-deepseek-ct.patch
-curl -O https://raw.githubusercontent.com/pasta-paul/dsv4-flash-w4a16-fp8/main/scripts/patch_v4_packed_mapping.py
+curl -O https://raw.githubusercontent.com/canada-quant/dsv4-flash-w4a16-fp8/main/scripts/Dockerfile.dsv4-spark
+curl -O https://raw.githubusercontent.com/canada-quant/dsv4-flash-w4a16-fp8/main/scripts/kylesayrs-deepseek-ct.patch
+curl -O https://raw.githubusercontent.com/canada-quant/dsv4-flash-w4a16-fp8/main/scripts/patch_v4_packed_mapping.py
 mv Dockerfile.dsv4-spark Dockerfile
 
 ./build-and-copy.sh \
@@ -90,13 +90,13 @@ mv Dockerfile.dsv4-spark Dockerfile
 `-c <hostname>` will `docker save | scp | docker load` the built image to the second Spark automatically. Image is ~20 GB.
 
 The Dockerfile applies these on top of `jasl/vllm@ds4-sm120-experimental`:
-- `git am` of [`scripts/kylesayrs-deepseek-ct.patch`](../scripts/kylesayrs-deepseek-ct.patch) — vendored from `neuralmagic/vllm@kylesayrs/deepseek-ct` commit `d09eeb498` (the rebased successor of `f910a73a93`, which was force-pushed out of upstream history; pre-rebased onto `jasl/vllm@ds4-sm120`). We pin patch content rather than a moving upstream SHA — see [issue #1](https://github.com/pasta-paul/dsv4-flash-w4a16-fp8/issues/1) and [`findings/kylesayrs-pr-41276-integration.md`](kylesayrs-pr-41276-integration.md#sha-rebase-recovery-issue-1-2026-05-08) for why.
+- `git am` of [`scripts/kylesayrs-deepseek-ct.patch`](../scripts/kylesayrs-deepseek-ct.patch) — vendored from `neuralmagic/vllm@kylesayrs/deepseek-ct` commit `d09eeb498` (the rebased successor of `f910a73a93`, which was force-pushed out of upstream history; pre-rebased onto `jasl/vllm@ds4-sm120`). We pin patch content rather than a moving upstream SHA — see [issue #1](https://github.com/canada-quant/dsv4-flash-w4a16-fp8/issues/1) and [`findings/kylesayrs-pr-41276-integration.md`](kylesayrs-pr-41276-integration.md#sha-rebase-recovery-issue-1-2026-05-08) for why.
 - Runs `patch_v4_packed_mapping.py` to inject `packed_modules_mapping` into `DeepseekV4ForCausalLM` (the kylesayrs patch references but doesn't define this attr)
 - Skips the workspace pre-reservation patch (now upstream as `jasl/vllm@1d6f5c4`)
 
 ### 3b. Skip the build, ask for the OCI tarball
 
-If you'd rather not build, ping us on the [HF model discussions](https://huggingface.co/pastapaul/DeepSeek-V4-Flash-W4A16-FP8/discussions) — happy to share the `:exp` tarball directly.
+If you'd rather not build, ping us on the [HF model discussions](https://huggingface.co/canada-quant/DeepSeek-V4-Flash-W4A16-FP8/discussions) — happy to share the `:exp` tarball directly.
 
 ## 4. Launch — head + worker
 
@@ -107,7 +107,7 @@ The launch command is identical on both boxes except `--node-rank` and `--headle
 ```bash
 # Common — defined once, used on each box
 ENGINE_CMD=(
-  vllm serve pastapaul/DeepSeek-V4-Flash-W4A16-FP8
+  vllm serve canada-quant/DeepSeek-V4-Flash-W4A16-FP8
   --served-model-name DSV4-W4A16-FP8 deepseek-ai/DeepSeek-V4-Flash deepseek-v4-flash
   --trust-remote-code
   --kv-cache-dtype fp8 --block-size 256

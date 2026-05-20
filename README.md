@@ -5,7 +5,7 @@ DeepSeek-V4-Flash that actually serves in vLLM**, validated on Hopper SM 9.0
 (H200) **and Blackwell SM 12.x** (DGX Spark GB10, RTX PRO 6000). Built by
 stacking three in-flight upstream draft PRs and patching the gaps between them.
 
-🤗 Live model: **https://huggingface.co/pastapaul/DeepSeek-V4-Flash-W4A16-FP8** — public, Apache-2.0, no HF token required.
+🤗 Live model: **https://huggingface.co/canada-quant/DeepSeek-V4-Flash-W4A16-FP8** — public, Apache-2.0, no HF token required.
 
 > **Status (2026-05-06):**
 > - Live engine on dual DGX Spark TP=2 graphs-ON serving **1 M-token context**, image `vllm-w4a16-dsv4:exp` from `jasl/vllm@ds4-sm120-experimental`.
@@ -23,14 +23,14 @@ stacking three in-flight upstream draft PRs and patching the gaps between them.
 Single-file zero-to-serving:
 
 ```bash
-curl -fsSLO https://raw.githubusercontent.com/pasta-paul/dsv4-flash-w4a16-fp8/main/scripts/bootstrap_dsv4_spark.sh
+curl -fsSLO https://raw.githubusercontent.com/canada-quant/dsv4-flash-w4a16-fp8/main/scripts/bootstrap_dsv4_spark.sh
 chmod +x bootstrap_dsv4_spark.sh
 ./bootstrap_dsv4_spark.sh --head-host spark-a --worker-host spark-b
 ```
 
 Idempotent — does SSH-reachability check, model pre-cache (no token, always `huggingface-cli download` so half-cached states resume rather than pass silently), QSFP /30 setup, image build via `eugr/spark-vllm-docker` + our DSV4 patches (Dockerfile + kylesayrs patch + packed_modules patch all curled into the build context), scp-distribute to the worker, container launch on both nodes (head rank 0 + worker rank 1 `--headless`), waits for `/health=200`. ~30–50 min the first run (mostly the docker build), ~7 min on re-runs with `--skip-build`. On success writes `/workspace/build-metadata.yaml` to `/tmp/dsv4-spark-build-metadata-*.yaml` for bug reports; on failure dumps last-300-line container logs, env, `nvidia-smi`, and `dmesg` tail from **both nodes**.
 
-Walk-through with per-flag explanation: [`findings/QUICKSTART_DUAL_SPARK.md`](findings/QUICKSTART_DUAL_SPARK.md). Manual build recipe: [`scripts/Dockerfile.dsv4-spark`](scripts/Dockerfile.dsv4-spark) + [`scripts/kylesayrs-deepseek-ct.patch`](scripts/kylesayrs-deepseek-ct.patch) + [`scripts/patch_v4_packed_mapping.py`](scripts/patch_v4_packed_mapping.py). Don't want to build? Ping us on the [HF model discussions](https://huggingface.co/pastapaul/DeepSeek-V4-Flash-W4A16-FP8/discussions) for the OCI tarball.
+Walk-through with per-flag explanation: [`findings/QUICKSTART_DUAL_SPARK.md`](findings/QUICKSTART_DUAL_SPARK.md). Manual build recipe: [`scripts/Dockerfile.dsv4-spark`](scripts/Dockerfile.dsv4-spark) + [`scripts/kylesayrs-deepseek-ct.patch`](scripts/kylesayrs-deepseek-ct.patch) + [`scripts/patch_v4_packed_mapping.py`](scripts/patch_v4_packed_mapping.py). Don't want to build? Ping us on the [HF model discussions](https://huggingface.co/canada-quant/DeepSeek-V4-Flash-W4A16-FP8/discussions) for the OCI tarball.
 
 ## Why this exists
 
@@ -144,7 +144,7 @@ For dual DGX Spark TP=2 the bootstrap script above does this for you. Manual bui
 
 Required pieces (stacked):
 - **`jasl/vllm@ds4-sm120-experimental`** — current branch with the SM12x DSV4 work + the experimental superset (split-KV decode, GB10 fused-MoE config aliases, tuned MLA graph defaults). Use `ds4-sm120` instead if you want the more-conservative PR-tracked branch (~6 commits behind).
-- **Apply** [`scripts/kylesayrs-deepseek-ct.patch`](scripts/kylesayrs-deepseek-ct.patch) — vendored from `neuralmagic/vllm@kylesayrs/deepseek-ct` commit `d09eeb498` (the rebased successor of `f910a73a93`, which was force-pushed out of history — see issue [#1](https://github.com/pasta-paul/dsv4-flash-w4a16-fp8/issues/1)). Pre-rebased onto jasl/vllm so `git apply` works with no 3-way merge.
+- **Apply** [`scripts/kylesayrs-deepseek-ct.patch`](scripts/kylesayrs-deepseek-ct.patch) — vendored from `neuralmagic/vllm@kylesayrs/deepseek-ct` commit `d09eeb498` (the rebased successor of `f910a73a93`, which was force-pushed out of history — see issue [#1](https://github.com/canada-quant/dsv4-flash-w4a16-fp8/issues/1)). Pre-rebased onto jasl/vllm so `git apply` works with no 3-way merge.
 - **Patch** [`scripts/patch_v4_packed_mapping.py`](scripts/patch_v4_packed_mapping.py) — adds `packed_modules_mapping` to `DeepseekV4ForCausalLM`. Still needed: PR #41276 references this attribute but doesn't define it.
 - The workspace pre-reservation patch is **no longer needed** — landed upstream as `jasl/vllm@1d6f5c4` (closed our [issue #41700](https://github.com/vllm-project/vllm/issues/41700)).
 
@@ -160,7 +160,7 @@ pip install -e . --no-build-isolation
 Production canonical (Phase 4e — 1 M context graphs-ON, single-stream):
 
 ```bash
-vllm serve pastapaul/DeepSeek-V4-Flash-W4A16-FP8 \
+vllm serve canada-quant/DeepSeek-V4-Flash-W4A16-FP8 \
     --served-model-name DSV4-W4A16-FP8 deepseek-ai/DeepSeek-V4-Flash deepseek-v4-flash \
     --tensor-parallel-size 2 \
     --kv-cache-dtype fp8 --block-size 256 \
@@ -195,7 +195,7 @@ For multi-stream + long context, drop `--max-model-len` to `262144` and `--max-n
 - [x] **Phase 4d** — Long-context graphs-ON sweep on `jasl@0789bc9` (workspace patch upstreamed as `1d6f5c4` + SM12x DeepGEMM fix `0789bc9` unblocks graphs-ON at long context). NIAH 4/4 retrieval at **128K, 256K×1, 256K×2** contexts; mini-suite **10/10 PASS** at canonical 256K×2 graphs-ON (8.92 t/s decode).
 - [x] **Phase 4e** — Production canonical at **1 M context graphs-ON** on `ds4-sm120-experimental` (split-KV decode + tuned MLA graph defaults). NIAH 4/4 at 200K-token haystack on 256K × 2 predecessor canonical, mini-suite **10/10 PASS** with **1.3–3.4× speedup** vs `:sm12fix`. **GSM8K 95.00 % strict / 94.92 % flexible** preserved on the new image. Think-max **3/3 PASS** at 14–15 t/s. Live engine serves 1 M × 1 graphs-ON. Quickstart: [`findings/QUICKSTART_DUAL_SPARK.md`](findings/QUICKSTART_DUAL_SPARK.md). Full report: [`findings/spark_tp2_deployment.md` Phase 4e](findings/spark_tp2_deployment.md#phase-4e--production-canonical-at-1-m-context-on-ds4-sm120-experimental-2026-05-06).
 - [x] **Phase 5** — Dual RTX PRO 6000 Blackwell (SM 12.0) on `ds4-sm120-experimental` tip `abad5dc71`. Toolcall15 27/30 (90%, single round), GSM8K 95.07%, HumanEval pass@1 78.05%. NIAH single-stream PASS at 75K / 128K / 256K / 500K, **256K × 2 concurrent PASS** (377 s vs 356 s single — confirms `e734ace5` fixes the Spark stall on Blackwell). Decode 47–48 tok/s per stream at c=1 (3× Spark), 84 tok/s aggregate at c=2. Full report: [`findings/rtxpro6000_blackwell_deployment.md`](findings/rtxpro6000_blackwell_deployment.md).
-- [x] **Public HF release** at [`pastapaul/DeepSeek-V4-Flash-W4A16-FP8`](https://huggingface.co/pastapaul/DeepSeek-V4-Flash-W4A16-FP8)
+- [x] **Public HF release** at [`canada-quant/DeepSeek-V4-Flash-W4A16-FP8`](https://huggingface.co/canada-quant/DeepSeek-V4-Flash-W4A16-FP8)
 - [x] **Upstream contributions** — workspace allocator bug + patch ([`vllm-project/vllm#41700`](https://github.com/vllm-project/vllm/issues/41700) — landed as `jasl/vllm@1d6f5c4`), Marlin TP scale-sharding ([`#41511`](https://github.com/vllm-project/vllm/issues/41511))
 
 ### Standard benchmarks
@@ -208,7 +208,7 @@ For multi-stream + long context, drop `--max-model-len` to `262144` and `--max-n
 | Decode tok/s @ c=1 (1024-in / 1024-out) | TTFT mean / TPOT mean | — | 14–17 / — | **47.5 / 20.8 ms** |
 | MMLU | 5-shot | 87.27% ±0.27% | (pending) | (pending) |
 
-Results updated to the [HF model card](https://huggingface.co/pastapaul/DeepSeek-V4-Flash-W4A16-FP8) as each lands.
+Results updated to the [HF model card](https://huggingface.co/canada-quant/DeepSeek-V4-Flash-W4A16-FP8) as each lands.
 
 ¹ The H200 numbers are from harness HEAD `85aca32` and `jasl/vllm@428e08e` — an **older vllm build**. The Spark and RTX PRO 6000 numbers are on today's `ds4-sm120-experimental` tip. Treat the H200 ↔ Blackwell deltas as informational, not as a "same software, different hardware" benchmark; the valid same-software comparison is **Spark ↔ RTX PRO 6000** (effectively at parity within stderr).
 

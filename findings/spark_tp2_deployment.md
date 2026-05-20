@@ -1,13 +1,13 @@
 # DGX Spark TP=2 deployment
 
-**Date**: 2026-05-04 · **Hardware**: 2× DGX Spark GB10 (SM 12.1a, 121 GiB UMA each) · **Topology**: TP=2 over QSFP RDMA · **Quant**: this model (`pastapaul/DeepSeek-V4-Flash-W4A16-FP8`)
+**Date**: 2026-05-04 · **Hardware**: 2× DGX Spark GB10 (SM 12.1a, 121 GiB UMA each) · **Topology**: TP=2 over QSFP RDMA · **Quant**: this model (`canada-quant/DeepSeek-V4-Flash-W4A16-FP8`)
 
 End-to-end validation on dual DGX Spark Grace Blackwell hardware. **First public coherent vLLM serve of W4A16 V4-Flash on Spark.** All harness gates pass with CUDA graphs enabled (no `--enforce-eager` workaround) at ~14–17 tok/s decode, plus standardized benchmarks at H200-or-better quality.
 
 ## TL;DR — canonical recipe (CUDA graphs ON)
 
 ```bash
-vllm serve pastapaul/DeepSeek-V4-Flash-W4A16-FP8 \
+vllm serve canada-quant/DeepSeek-V4-Flash-W4A16-FP8 \
   --served-model-name deepseek-v4-flash --trust-remote-code \
   --kv-cache-dtype fp8 --block-size 256 \
   --tokenizer-mode deepseek_v4 \
@@ -241,7 +241,7 @@ Standardized benchmarks (GSM8K, HumanEval, MMLU, full jasl `run_acceptance.sh`) 
 ### New canonical recipe (256 K × 2 graphs-ON)
 
 ```bash
-vllm serve pastapaul/DeepSeek-V4-Flash-W4A16-FP8 \
+vllm serve canada-quant/DeepSeek-V4-Flash-W4A16-FP8 \
   --served-model-name deepseek-v4-flash --trust-remote-code \
   --kv-cache-dtype fp8 --block-size 256 \
   --tokenizer-mode deepseek_v4 \
@@ -345,7 +345,7 @@ All three terminate cleanly (`finish_reason: stop`, not `length`) — the model 
 After the 256 K × 2 validation was clean, we promoted the canonical to **1 048 576-token context, single-stream**, graphs-ON. Engine boots cleanly (`/health=200`, `max_model_len=1048576`), smoke + think-max + tool-calling all pass against the running engine.
 
 ```bash
-vllm serve pastapaul/DeepSeek-V4-Flash-W4A16-FP8 \
+vllm serve canada-quant/DeepSeek-V4-Flash-W4A16-FP8 \
   --served-model-name DSV4-W4A16-FP8 \
   --served-model-name deepseek-ai/DeepSeek-V4-Flash \
   --served-model-name deepseek-v4-flash \

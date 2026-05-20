@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Serve pastapaul/DeepSeek-V4-Flash-W4A16-FP8 on dual DGX Spark GB10 (SM 12.1a)
+# Serve canada-quant/DeepSeek-V4-Flash-W4A16-FP8 on dual DGX Spark GB10 (SM 12.1a)
 # at TP=2 over QSFP RDMA. Canonical recipe — CUDA graphs ON, no eager workaround.
 #
 # Two flags differ from the H200 recipe (scripts/serve_quant.sh):
@@ -37,7 +37,7 @@
 
 set -euo pipefail
 
-MODEL="${MODEL:-pastapaul/DeepSeek-V4-Flash-W4A16-FP8}"
+MODEL="${MODEL:-canada-quant/DeepSeek-V4-Flash-W4A16-FP8}"
 SERVED_NAME="${SERVED_NAME:-deepseek-v4-flash}"
 HEAD_IP="${HEAD_IP:?set HEAD_IP to the head-node QSFP IP}"
 MASTER_PORT="${MASTER_PORT:-29501}"

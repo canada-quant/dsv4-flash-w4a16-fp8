@@ -24,7 +24,7 @@ for [vllm-project/vllm#40991](https://github.com/vllm-project/vllm/pull/40991).
 - PyTorch: 2.11.0+cu130
 - CUDA: 13.0
 - GPU: 8× NVIDIA H200 (SM 9.0), 141 GB HBM3e each
-- Model: pastapaul/DeepSeek-V4-Flash-W4A16-FP8 (FP8_BLOCK attention + W4A16 GPTQ routed experts, group_size=128, produced via [llm-compressor PR vllm-project/llm-compressor#2647](https://github.com/vllm-project/llm-compressor/pull/2647) branch `kylesayrs/transformers-v5`, attention quant mirrors RedHatAI/DeepSeek-V4-Flash-NVFP4-FP8 topology)
+- Model: canada-quant/DeepSeek-V4-Flash-W4A16-FP8 (FP8_BLOCK attention + W4A16 GPTQ routed experts, group_size=128, produced via [llm-compressor PR vllm-project/llm-compressor#2647](https://github.com/vllm-project/llm-compressor/pull/2647) branch `kylesayrs/transformers-v5`, attention quant mirrors RedHatAI/DeepSeek-V4-Flash-NVFP4-FP8 topology)
 
 ### 🐛 Describe the bug
 
@@ -215,7 +215,7 @@ Posted at https://github.com/vllm-project/vllm/pull/40991#issuecomment-436427844
 >
 > Per @wuwenthink's TP=2 SM120 harness report (May 1), chat-smoke coding 0/2 — our H200 TP=2 W4A16 with the same harness defaults got coding 2/2 PASS. So the SM12x coding 0/2 is reproducibly an SM12x-specific issue (kernel correctness, not reasoning-token-exhaustion as I'd previously speculated).
 >
-> Full integration writeup: pasta-paul/dsv4-flash-awq-w4a16 — 5 distinct upstream gaps documented during this work, plus the Marlin TP fix surface, plus the published model at pastapaul/DeepSeek-V4-Flash-W4A16-FP8.
+> Full integration writeup: pasta-paul/dsv4-flash-awq-w4a16 — 5 distinct upstream gaps documented during this work, plus the Marlin TP fix surface, plus the published model at canada-quant/DeepSeek-V4-Flash-W4A16-FP8.
 >
 > /cc @jasl @kylesayrs @dsikka
 

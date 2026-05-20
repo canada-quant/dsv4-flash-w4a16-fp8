@@ -20,7 +20,7 @@
 #
 # What it does (in order):
 #   1. SSH-reachability check for both hosts
-#   2. Pre-download pastapaul/DeepSeek-V4-Flash-W4A16-FP8 on both (always idempotent via huggingface-cli)
+#   2. Pre-download canada-quant/DeepSeek-V4-Flash-W4A16-FP8 on both (always idempotent via huggingface-cli)
 #   3. Configure QSFP /30 on both (skippable)
 #   4. Build vllm-w4a16-dsv4:exp on the HEAD box (skippable; uses build-and-copy.sh)
 #   5. Distribute the image to WORKER (folded into step 4)
@@ -73,7 +73,7 @@ done
 H="${SSH_USER}@${HEAD_HOST}"
 W="${SSH_USER}@${WORKER_HOST}"
 SSH_OPTS="-o ConnectTimeout=10 -o StrictHostKeyChecking=accept-new"
-DSV4_REPO_RAW="https://raw.githubusercontent.com/pasta-paul/dsv4-flash-w4a16-fp8/main"
+DSV4_REPO_RAW="https://raw.githubusercontent.com/canada-quant/dsv4-flash-w4a16-fp8/main"
 
 log() { echo "[$(date +%H:%M:%S)] $*"; }
 
@@ -116,12 +116,12 @@ log "  ok — both Sparks reachable"
 # The previous "is any .safetensors present?" gate passed on half-cached models
 # and produced engines that crashed in kernel warmup on corrupt KV-cache tensors.
 if [[ $SKIP_DOWNLOAD -eq 0 ]]; then
-  log "[2/9] Ensuring pastapaul/DeepSeek-V4-Flash-W4A16-FP8 is fully cached on both Sparks (~143 GiB)..."
+  log "[2/9] Ensuring canada-quant/DeepSeek-V4-Flash-W4A16-FP8 is fully cached on both Sparks (~143 GiB)..."
   for HOST in "$H" "$W"; do
     ssh $SSH_OPTS "$HOST" '
       set -e
       command -v huggingface-cli >/dev/null 2>&1 || pip install --quiet --user huggingface_hub
-      huggingface-cli download pastapaul/DeepSeek-V4-Flash-W4A16-FP8 >/dev/null
+      huggingface-cli download canada-quant/DeepSeek-V4-Flash-W4A16-FP8 >/dev/null
       echo "  [$(hostname)] cache verified"
     '
   done
@@ -215,7 +215,7 @@ DOCKER_FLAGS=(
 )
 
 ENGINE_CMD=(
-  vllm serve pastapaul/DeepSeek-V4-Flash-W4A16-FP8
+  vllm serve canada-quant/DeepSeek-V4-Flash-W4A16-FP8
   --served-model-name DSV4-W4A16-FP8 deepseek-ai/DeepSeek-V4-Flash deepseek-v4-flash
   --trust-remote-code
   --kv-cache-dtype fp8 --block-size 256

@@ -1,6 +1,6 @@
 # Phase 5 — Dual RTX PRO 6000 Blackwell deployment (2026-05-05)
 
-End-to-end validation of `pastapaul/DeepSeek-V4-Flash-W4A16-FP8` on the harness HANDOFF's *primary development host*: dual RTX PRO 6000 Blackwell Server (SM 12.0, 96 GB × 2). Built on the **experimental superset** of `ds4-sm120` so we exercise commits that aren't in the public `ds4-sm120` PR branch yet — including the today-landed `e734ace5 (Release DeepSeek V4 protected prompt refs under pressure)` that we suspected was the fix for the Spark 256K×2 stall observed 2026-05-04.
+End-to-end validation of `canada-quant/DeepSeek-V4-Flash-W4A16-FP8` on the harness HANDOFF's *primary development host*: dual RTX PRO 6000 Blackwell Server (SM 12.0, 96 GB × 2). Built on the **experimental superset** of `ds4-sm120` so we exercise commits that aren't in the public `ds4-sm120` PR branch yet — including the today-landed `e734ace5 (Release DeepSeek V4 protected prompt refs under pressure)` that we suspected was the fix for the Spark 256K×2 stall observed 2026-05-04.
 
 ## Hardware and toolchain
 

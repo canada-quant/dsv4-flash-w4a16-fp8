@@ -257,7 +257,7 @@ is the running log. Patches and helper scripts are committed to this repo.
 
 ## SHA rebase recovery (issue #1, 2026-05-08)
 
-ZhouHr opened [issue #1](https://github.com/pasta-paul/dsv4-flash-w4a16-fp8/issues/1)
+ZhouHr opened [issue #1](https://github.com/canada-quant/dsv4-flash-w4a16-fp8/issues/1)
 reporting a build failure on the live cherry-pick:
 
 ```

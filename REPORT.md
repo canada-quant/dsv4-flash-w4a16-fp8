@@ -207,11 +207,11 @@ Worker rank 1 needs `--headless` — without it, the worker tries to initialize 
 
 Full validation report — build provenance, B200 token-level alignment table, operational constraints, recommended next iterations — in [`findings/spark_tp2_deployment.md`](findings/spark_tp2_deployment.md). Canonical launch script: [`scripts/serve_spark_tp2.sh`](scripts/serve_spark_tp2.sh).
 
-This is the first end-to-end validation of `pastapaul/DeepSeek-V4-Flash-W4A16-FP8` on real DGX Spark hardware.
+This is the first end-to-end validation of `canada-quant/DeepSeek-V4-Flash-W4A16-FP8` on real DGX Spark hardware.
 
 ## Phase 5 — Dual RTX PRO 6000 Blackwell deployment validation (2026-05-05)
 
-Validated `pastapaul/DeepSeek-V4-Flash-W4A16-FP8` on the harness HANDOFF's *primary development host*: dual RTX PRO 6000 Blackwell Server (SM 12.0, 96 GB × 2). Built on the `ds4-sm120-experimental` superset of `ds4-sm120` so we exercise commits not yet promoted to the public PR branch — including `e734ace5` (Release DeepSeek V4 protected prompt refs under pressure), the suspected fix for the Spark 256K×2 stall observed in Phase 4d.
+Validated `canada-quant/DeepSeek-V4-Flash-W4A16-FP8` on the harness HANDOFF's *primary development host*: dual RTX PRO 6000 Blackwell Server (SM 12.0, 96 GB × 2). Built on the `ds4-sm120-experimental` superset of `ds4-sm120` so we exercise commits not yet promoted to the public PR branch — including `e734ace5` (Release DeepSeek V4 protected prompt refs under pressure), the suspected fix for the Spark 256K×2 stall observed in Phase 4d.
 
 ### Hardware
 
