@@ -1,0 +1,27 @@
+# Canada Quant — benchmark reproduction dependencies
+# Pin to versions verified on RTX PRO 6000 Brev g7e.24xlarge, 2026-05-24
+# Install in the same venv as vLLM serve.
+
+# Core HF + OpenAI client (used by aime_bench.py, gsm8k50_sanity.py, etc.)
+datasets>=4.8.0
+huggingface_hub>=0.27.0
+hf-transfer>=0.1.8
+openai>=2.0.0
+
+# lm-eval-harness (used for MMLU-Pro, IFEval, HumanEval, GSM8K)
+lm-eval>=0.4.12
+
+# IFEval task-specific deps (lm_eval ifeval needs these)
+langdetect
+immutabledict
+nltk
+
+# Tokenizer conversion (DeepSeek V4 tokenizer init needs this)
+sentencepiece>=0.2.0
+
+# Code-execution benches (HumanEval-via-evalplus path)
+evalplus>=0.3.0
+
+# Bench harness scripts may use these
+numpy
+torch  # already installed via vLLM; do not pin here, vLLM controls torch version
