@@ -1,0 +1,31 @@
+From: canada-quant <pasta-paul@users.noreply.github.com>
+Date: 2026-05-25
+Subject: [PATCH] Marlin MoE: oversize workspace lock array 4x
+
+The lock-array workspace in marlin_make_workspace_new() is sized at sms * max_blocks_per_sm
+int32s. Under concurrent decode with moe_block_size==8, multiple blocks can transition slices
+and bump locks_off past the allocation. With the JIT-PTX cubin (pre-PR #40923) this silently
+read from caching-allocator slack; with the native sm_120a cubin (post #40923) it manifests as
+cudaErrorIllegalAddress.
+
+Companion to PR #36889 c_tmp fix. Together these resolve the 29/30 IMA we observe on RTX PRO
+6000 (SM 12.0) with DeepSeek-V4-Flash W4A16+FP8+MTP under c=4 thinking-mode generation.
+
+Symptom cross-references: #26558 (RTX 6000 Pro + GLM-4.6-GPTQ), #36811 (RTX A6000 + Qwen3.5-A3B),
+#35922 (A100 + Qwen3-30B-A3B).
+
+---
+ vllm/model_executor/layers/quantization/utils/marlin_utils.py | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/vllm/model_executor/layers/quantization/utils/marlin_utils.py b/vllm/model_executor/layers/quantization/utils/marlin_utils.py
+--- a/vllm/model_executor/layers/quantization/utils/marlin_utils.py
++++ b/vllm/model_executor/layers/quantization/utils/marlin_utils.py
+@@ -261,8 +261,8 @@ def marlin_make_workspace_new(
+     device: torch.device, max_blocks_per_sm: int = 1
+ ) -> torch.Tensor:
+     sms = num_compute_units(device.index)
+     return torch.zeros(
+-        sms * max_blocks_per_sm, dtype=torch.int, device=device, requires_grad=False
++        sms * max_blocks_per_sm * 4, dtype=torch.int, device=device, requires_grad=False
+     )

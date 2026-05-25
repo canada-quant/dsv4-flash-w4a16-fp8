@@ -1,0 +1,161 @@
+diff --git a/csrc/moe/marlin_moe_wna16/ops.cu b/csrc/moe/marlin_moe_wna16/ops.cu
+index e3f3b4175b92..b221ffdb824f 100644
+--- a/csrc/moe/marlin_moe_wna16/ops.cu
++++ b/csrc/moe/marlin_moe_wna16/ops.cu
+@@ -429,6 +429,7 @@ void marlin_mm(const void* A, const void* B, void* C, void* C_tmp, void* b_bias,
+   cudaDeviceGetAttribute(&max_shared_mem,
+                          cudaDevAttrMaxSharedMemoryPerBlockOptin, dev);
+   TORCH_CHECK(max_shared_mem > 0);
++  int device_max_shared_mem = max_shared_mem;
+ 
+   int major_capability, minor_capability;
+   cudaDeviceGetAttribute(&major_capability, cudaDevAttrComputeCapabilityMajor,
+@@ -519,10 +520,10 @@ void marlin_mm(const void* A, const void* B, void* C, void* C_tmp, void* b_bias,
+   }
+ 
+   cudaFuncSetAttribute(kernel, cudaFuncAttributeMaxDynamicSharedMemorySize,
+-                       max_shared_mem);
++                       device_max_shared_mem);
+   // avoid ">>>" being formatted to "> > >"
+   // clang-format off
+-  kernel<<<blocks, num_threads, max_shared_mem, stream>>>(
++  kernel<<<blocks, num_threads, sh_cache_size, stream>>>(
+       A_ptr, B_ptr, C_ptr, C_tmp_ptr, bias_ptr, a_s_ptr, b_s_ptr, g_s_ptr, zp_ptr, g_idx_ptr,
+       sorted_token_ids_ptr, expert_ids_ptr, num_tokens_past_padded_ptr,
+       topk_weights_ptr, top_k, mul_topk_weights, num_groups, prob_m,
+@@ -688,9 +689,8 @@ torch::Tensor moe_wna16_marlin_gemm(
+   torch::Tensor c_tmp;
+   if (use_fp32_reduce && !use_atomic_add) {
+     // max num of threadblocks is sms * 4
+-    long max_c_tmp_size = min(
+-        (long)size_n * sorted_token_ids.size(0),
+-        (long)sms * 4 * moe_block_size * MARLIN_NAMESPACE_NAME::max_thread_n);
++    long max_c_tmp_size =
++        (long)sms * 4 * moe_block_size * MARLIN_NAMESPACE_NAME::max_thread_n;
+     if (moe_block_size == 8) max_c_tmp_size *= 2;
+     c_tmp = torch::empty({max_c_tmp_size}, options_fp32);
+   } else {
+diff --git a/tests/kernels/moe/test_moe.py b/tests/kernels/moe/test_moe.py
+index 43bdd03cfe13..8effc46d3f11 100644
+--- a/tests/kernels/moe/test_moe.py
++++ b/tests/kernels/moe/test_moe.py
+@@ -1132,6 +1132,119 @@ def test_fused_marlin_moe(
+     torch.testing.assert_close(marlin_output, torch_output, atol=4e-2, rtol=0)
+ 
+ 
++@pytest.mark.skipif(current_platform.is_rocm(), reason="Skip for rocm")
++def test_fused_marlin_moe_cuda_graph():
++    """Test that GPTQ Marlin MoE works correctly with CUDA graphs.
++
++    Regression test for https://github.com/vllm-project/vllm/issues/36811
++    The bug was caused by:
++    1. cudaFuncSetAttribute(MaxDynamicSharedMemorySize) being overwritten
++       by later CUDA graph captures with different blocks_per_sm values.
++    2. Batch-dependent c_tmp buffer sizing via sorted_token_ids.size(0).
++    """
++    torch.cuda.manual_seed(42)
++
++    # Use 64 experts like Qwen3.5-35B-A3B to trigger the bug
++    e, topk = 64, 8
++    n, k = 1024, 1024
++    group_size = 128
++    quant_type = scalar_types.uint4b8
++    dtype = torch.half
++
++    # Batch sizes matching vLLM's CUDA graph capture sizes
++    batch_sizes = [1, 2, 4, 8, 16, 24, 32]
++
++    # Create weights (shared across all batch sizes)
++    w1 = torch.randn((e, 2 * n, k), device="cuda", dtype=dtype) / 10
++    w2 = torch.randn((e, k, n), device="cuda", dtype=dtype) / 10
++
++    w1_data = MarlinMoEWeightData.make(
++        w=w1,
++        quant_type=quant_type,
++        group_size=group_size,
++        act_order=False,
++    )
++    w2_data = MarlinMoEWeightData.make(
++        w=w2,
++        quant_type=quant_type,
++        group_size=group_size,
++        act_order=False,
++    )
++
++    # Capture a CUDA graph for each batch size
++    graphs = {}
++    static_inputs = {}
++    static_outputs = {}
++
++    for m in batch_sizes:
++        a = torch.randn((m, k), device="cuda", dtype=dtype) / 10
++        score = torch.randn((m, e), device="cuda", dtype=dtype)
++        topk_weights, topk_ids, _ = fused_topk(a, score, topk, False)
++
++        # Static input tensors for graph replay
++        a_static = a.clone()
++        topk_weights_static = topk_weights.clone()
++        topk_ids_static = topk_ids.clone()
++
++        stream = torch.cuda.Stream()
++        graph = torch.cuda.CUDAGraph()
++        with torch.cuda.stream(stream), torch.cuda.graph(graph):
++            out = fused_marlin_moe(
++                a_static,
++                w1_data.qweight,
++                w2_data.qweight,
++                None,
++                None,
++                w1_data.scales,
++                w2_data.scales,
++                topk_weights_static,
++                topk_ids_static,
++                global_num_experts=e,
++                quant_type_id=quant_type.id,
++                is_k_full=True,
++            )
++
++        graphs[m] = graph
++        static_inputs[m] = (a_static, topk_weights_static, topk_ids_static)
++        static_outputs[m] = out
++
++    torch.accelerator.synchronize()
++
++    # Replay each graph and compare against eager mode.
++    # The bug manifested when replaying small batch size graphs (e.g., M=1)
++    # after larger batch sizes had overwritten cudaFuncSetAttribute.
++    for m in batch_sizes:
++        a_static, topk_weights_static, topk_ids_static = static_inputs[m]
++
++        # Compute eager reference with the same inputs
++        eager_out = fused_marlin_moe(
++            a_static,
++            w1_data.qweight,
++            w2_data.qweight,
++            None,
++            None,
++            w1_data.scales,
++            w2_data.scales,
++            topk_weights_static,
++            topk_ids_static,
++            global_num_experts=e,
++            quant_type_id=quant_type.id,
++            is_k_full=True,
++        )
++
++        # Replay the captured graph
++        static_outputs[m].zero_()
++        graphs[m].replay()
++        torch.accelerator.synchronize()
++
++        torch.testing.assert_close(
++            static_outputs[m],
++            eager_out,
++            atol=1e-2,
++            rtol=1e-2,
++        )
++
++
+ @pytest.mark.flaky(reruns=2)
+ @pytest.mark.skipif(current_platform.is_rocm(), reason="Skip for rocm")
+ @pytest.mark.parametrize("m", [1, 256])
