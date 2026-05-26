@@ -137,6 +137,53 @@ The 9 think-max failures on Spark at 16K context + 32K output budget are not a m
 
 **Empirical confirmation (2026-05-05, Spark):** the same 10 cases re-run at `--max-model-len=65536`, `--max-num-seqs=4`, `max_tokens=64000` produce **9 / 10 PASS** with reasoning + content lengths well past the original 32K cap. Decode rates remain in the canonical 14–17 t/s envelope at 4× the context window. Raw evidence: [`findings/spark_tp2_64k_retest_results.jsonl`](https://github.com/canada-quant/dsv4-flash-w4a16-fp8/blob/main/findings/spark_tp2_64k_retest_results.jsonl).
 
+### Update (2026-05-26): full dual-spark validation under aligned driver fleet
+
+Re-ran the OOB recipe on the cozzspark cluster (6× DGX Spark GB10) with fleet driver alignment to **`nvidia 580.142`** across all 6 nodes (was: heterogeneous 590.48.01 / 580.142 / 580.126.09). Two TP=2 pairs over QSFP 200 Gbps RDMA: **Pair A** = S1↔S2 on `enp1s0f1np1`/192.168.1.0/30 and **Pair B** = S5↔S6 on `enp1s0f0np0`/192.168.101.0/30. All at `--max-model-len 1048576 --max-num-seqs 1 --gpu-memory-utilization 0.90 --kv-cache-dtype fp8`, cudagraph FULL_AND_PIECEWISE.
+
+| Bench | Pair A (S1+S2) | Pair B (S5+S6) |
+|---|---|---|
+| c=1 P=1K D=1K throughput | **12.1 tok/s** (TPOT 82.9 ms) | **11.1 tok/s** (TPOT 90.0 ms) |
+| c=1 P=64K D=2K throughput | 10.6 tok/s (TPOT 94.3 ms) | 11.1 tok/s (TPOT 90.0 ms) |
+| AIME-2024 think-max (5 problems, max_tokens=65536) | 4/5 correct, 0 truncated, avg 366 s, avg 4408 tokens, **11.9 tok/s** | 4/5 correct, 0 truncated, avg 490 s, avg 5594 tokens, **11.5 tok/s** |
+| chat-smoke 4/4 | PASS | PASS |
+
+**AIME think-max — per-problem detail (Pair A; Pair B near-identical):**
+
+| Problem | wall (s) | tokens | decode tok/s | truncated | correct |
+|---|---|---|---|---|---|
+| AIME-2024-I-1 | 120 | 1,367 | 11.4 | no | ✓ |
+| AIME-2024-I-2 | 119 | 1,432 | 12.0 | no | ✓ |
+| AIME-2024-I-3 | 261 | 3,090 | 11.8 | no | ✗ (regex artifact — model output ends with "...80" but extractor caught "809") |
+| AIME-2024-I-4 | 120 | 1,426 | 11.9 | no | ✓ |
+| AIME-2024-I-5 | **1,207** | **14,725** | 12.2 | no | ✓ |
+
+Problem I-5 used 14.7K reasoning tokens and finished cleanly inside the 65K budget — concrete confirmation the long-reasoning operating point is stable on 2× GB10 at the canonical 1M-context, single-stream config.
+
+**OOM threshold sweep (Pair B, `--gpu-memory-utilization 0.90`):**
+
+| (max-model-len × max-num-seqs) | Status | Notes |
+|---|---|---|
+| 256K × 1 | fits | 5.6 min cold start |
+| 512K × 1 | fits | |
+| **1M × 1** | **fits — production canonical** | |
+| 1.5M × 1 | OOM-style fast-exit (~50 s) | first context wall |
+| 2M × 1 | OOM-style fast-exit | |
+| 256K × 2 | OOM-style fast-exit | concurrency wall at 256K — single-stream only at this context |
+
+**F006 fix confirmation.** Pre-alignment Pair A was running ~20% slower than Pair B due to driver-version mismatch on the head ↔ worker NCCL path (S1=590.48.01 vs S2=580.142). With both ends at 580.142 the cross-pair variance dropped from **+23% Pair B faster** to **−8% (Pair A slightly faster, within noise)** — see `findings/dual_spark_jasl_sha_regression_2026-05-26/F006_pair_throughput_variance_driver_mismatch.md`. **For a homogeneous 580.142 fleet, dual GB10 TP=2 sustains ~11–12 tok/s at bs=1** — sits inside the prior 14–17 published envelope's lower half (newer jasl SHAs would likely close that gap further; see F004 on SHA-pinning).
+
+**Seven OOB bootstrap blockers** discovered while exercising `scripts/bootstrap_dsv4_spark.sh` on a stock DGX Spark (Ubuntu 24.04, modern `huggingface_hub`), all with one-line workarounds documented in [`findings/dual_spark_jasl_sha_regression_2026-05-26/`](findings/dual_spark_jasl_sha_regression_2026-05-26/):
+- **F001** — PEP 668 blocks bootstrap step 2 `pip install --user`
+- **F002** — `huggingface_hub ≥ 0.35` removed legacy `huggingface-cli` shim (bootstrap hardcodes it)
+- **F003** — step 3 `sudo ip addr replace` requires passwordless sudo
+- **F004** — vendored `kylesayrs-deepseek-ct.patch` stale post-2026-05-19 jasl/vllm model refactor; bootstrap blocked from building any SHA ≥ that date (use 428e08e or earlier)
+- **F005** — image-copy step uses short-form `--worker-host` which doesn't resolve from the head spark; manual `docker save | docker load` over QSFP IP unblocks
+- **F006** — driver mismatch caused 20% cross-pair throughput variance (resolved by fleet alignment to 580.142)
+- **F007** — attempted driver upgrade to 595.71.05 blocked by Secure Boot (DKMS-built `nvidia.ko` signed with per-host MOK not enrolled in firmware shim DB; requires firmware UI to enroll or disable Secure Boot — not remotely recoverable)
+
+Raw bench JSONs + per-cell logs + suggested upstream patches: [`findings/dual_spark_jasl_sha_regression_2026-05-26/`](findings/dual_spark_jasl_sha_regression_2026-05-26/).
+
 ### Oracle comparison vs B200 TP=2 reference (Spark)
 
 See published HF model card. RTX PRO 6000 oracle-compare deferred for this run.
