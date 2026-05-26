@@ -1,0 +1,65 @@
+=== cell mml=1048576 mns=1 at 2026-05-26T18:43:47Z ===
+[11:43:47] [1/9] SSH reachability check...
+[11:43:48]   ok — both Sparks reachable
+[11:43:48] [2/9] skipping model download (--skip-download)
+[11:43:48] [3/9] skipping network setup (--skip-network)
+[11:43:48] [4-5/9] skipping build (--skip-build)
+[11:43:48] [6/9] Stopping any existing vllm_node containers...
+vllm_node
+vllm_node
+[11:43:56] [7/9] Launching worker rank 1 on spark-6 (headless)...
+ff228670d2162972b2704f9ff4545f316e651dc05a544cd4a162af322f2cfbb1
+[11:44:02] [8/9] Launching head rank 0 on spark-5 (API server on :8888)...
+a09ddcd17701bd0334113fe7b8c846351f8560425e8f711ae55417086f1671d3
+[11:44:03] [9/9] Waiting for /health=200 on http://spark-5:8888 (~5-7 min cold start)...
+[11:44:05]   still booting (30s elapsed, head=running, worker=running)...
+[11:44:36]   still booting (60s elapsed, head=running, worker=running)...
+[11:45:08]   still booting (90s elapsed, head=running, worker=running)...
+[11:45:40]   still booting (120s elapsed, head=running, worker=running)...
+[11:46:12]   still booting (150s elapsed, head=running, worker=running)...
+[11:46:45]   still booting (180s elapsed, head=running, worker=running)...
+[11:47:17]   still booting (210s elapsed, head=running, worker=running)...
+[11:47:49]   still booting (240s elapsed, head=running, worker=running)...
+[11:48:20]   still booting (270s elapsed, head=running, worker=running)...
+[11:48:52]   still booting (300s elapsed, head=running, worker=running)...
+[11:49:22] 
+[11:49:22] ========================================================================
+[11:49:22] ENGINE READY ✓
+[11:49:22]   endpoint:        http://spark-5:8888/v1
+[11:49:22]   model names:     DSV4-W4A16-FP8 | deepseek-ai/DeepSeek-V4-Flash | deepseek-v4-flash
+[11:49:22]   context:         1048576 tokens, max-num-seqs=1
+[11:49:22]   vllm ref:        jasl/vllm@428e08e
+[11:49:22]   image:           vllm-w4a16-dsv4:baseline-428e08e
+[11:49:22] ========================================================================
+[11:49:23] 
+[11:49:23] Build provenance written to /tmp/dsv4-spark-build-metadata-20260526-114922.yaml:
+  build_date: 2026-05-26T15:51:17Z
+  build_script_commit: 594631f7aed06f7f3f77a7a26fa7def1d3a3b5d1
+  vllm_version: 0.1.dev16268+g76b70802d.d20260526.cu132
+  vllm_commit: 76b70802df652be1ebcf82b60772a27714660124
+  flashinfer_commit: 56d537a1
+  gpu_arch: 12.1a
+  base_image: nvidia/cuda:13.2.0-devel-ubuntu24.04
+  build_args:
+    vllm_ref: 428e08e
+    transformers_5: false
+    exp_mxfp4: false
+    vllm_prs: ""
+    build_jobs: 16
+[11:49:23] 
+[11:49:23] If you hit issues, please paste the contents of /tmp/dsv4-spark-build-metadata-20260526-114922.yaml with your bug report.
+[11:49:23] 
+[11:49:23] Smoke test:
+[11:49:23] 
+  curl http://spark-5:8888/v1/chat/completions \
+    -H "Content-Type: application/json" \
+    -d '{
+      "model": "deepseek-v4-flash",
+      "messages": [{"role": "user", "content": "What is 7*8?"}],
+      "max_tokens": 50,
+      "temperature": 0
+    }'
+[11:49:23] 
+[11:49:23] More examples (think-max, tool calling): findings/QUICKSTART_DUAL_SPARK.md §6
+PROBE: curl: (6) Could not resolve host: spark-5
+SMOKE: curl: (6) Could not resolve host: spark-5

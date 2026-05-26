@@ -1,0 +1,8 @@
+=== context wall sweep at seqs=1 ===
+ctx262144_seq1 READY_NOSMOKE 336s
+ctx524288_seq1 READY_NOSMOKE 337s
+ctx1048576_seq1 READY_NOSMOKE 336s
+ctx1572864_seq1 FAIL_rc6 54s
+ctx2097152_seq1 FAIL_rc6 48s
+=== concurrency wall sweep at ctx=262144 ===
+ctx262144_seq2 FAIL_rc124 1800s

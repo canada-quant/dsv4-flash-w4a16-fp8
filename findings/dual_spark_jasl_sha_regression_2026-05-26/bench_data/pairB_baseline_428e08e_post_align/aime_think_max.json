@@ -1,0 +1,89 @@
+{
+  "config": {
+    "base": "http://100.87.54.16:8888",
+    "model": "DSV4-W4A16-FP8",
+    "max_tokens": 65536,
+    "thinking": "high"
+  },
+  "results": [
+    {
+      "id": "AIME-2024-I-1",
+      "expected": 204,
+      "extracted": "204",
+      "correct": true,
+      "truncated": false,
+      "wall_s": 129.6331067085266,
+      "prompt_tokens": 146,
+      "completion_tokens": 1432,
+      "reasoning_chars": 2911,
+      "content_chars": 1122,
+      "decode_tok_per_s": 11.04656083896669,
+      "tpot_ms": 90.52591250595434
+    },
+    {
+      "id": "AIME-2024-I-2",
+      "expected": 25,
+      "extracted": "25",
+      "correct": true,
+      "truncated": false,
+      "wall_s": 659.7515890598297,
+      "prompt_tokens": 62,
+      "completion_tokens": 7806,
+      "reasoning_chars": 17105,
+      "content_chars": 572,
+      "decode_tok_per_s": 11.831725954800408,
+      "tpot_ms": 84.51852281063665
+    },
+    {
+      "id": "AIME-2024-I-3",
+      "expected": 80,
+      "extracted": "809",
+      "correct": false,
+      "truncated": false,
+      "wall_s": 292.15858793258667,
+      "prompt_tokens": 118,
+      "completion_tokens": 3377,
+      "reasoning_chars": 9075,
+      "content_chars": 334,
+      "decode_tok_per_s": 11.558790805694942,
+      "tpot_ms": 86.51423983789952
+    },
+    {
+      "id": "AIME-2024-I-4",
+      "expected": 116,
+      "extracted": "116",
+      "correct": true,
+      "truncated": false,
+      "wall_s": 115.02888011932373,
+      "prompt_tokens": 128,
+      "completion_tokens": 1346,
+      "reasoning_chars": 3902,
+      "content_chars": 637,
+      "decode_tok_per_s": 11.70140923395711,
+      "tpot_ms": 85.45979206487647
+    },
+    {
+      "id": "AIME-2024-I-5",
+      "expected": 104,
+      "extracted": "104",
+      "correct": true,
+      "truncated": false,
+      "wall_s": 1253.7456431388855,
+      "prompt_tokens": 84,
+      "completion_tokens": 14007,
+      "reasoning_chars": 42295,
+      "content_chars": 964,
+      "decode_tok_per_s": 11.172122572591348,
+      "tpot_ms": 89.5085059712205
+    }
+  ],
+  "summary": {
+    "n": 5,
+    "completed": 5,
+    "correct": 4,
+    "truncated": 0,
+    "avg_wall_s": 490.06356139183043,
+    "avg_decode_tps": 11.4621218812021,
+    "avg_completion_tokens": 5593.6
+  }
+}

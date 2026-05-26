@@ -1,0 +1,61 @@
+{
+  "config": {
+    "base": "http://100.66.113.93:8888",
+    "model": "DSV4-W4A16-FP8",
+    "max_tokens": 65536,
+    "thinking": "high"
+  },
+  "results": [
+    {
+      "id": "AIME-2024-I-1",
+      "expected": 204,
+      "extracted": "204",
+      "correct": true,
+      "truncated": false,
+      "wall_s": 124.89632511138916,
+      "prompt_tokens": 146,
+      "completion_tokens": 1243,
+      "reasoning_chars": 2461,
+      "content_chars": 830,
+      "decode_tok_per_s": 9.952254390923246,
+      "tpot_ms": 100.47974667046594
+    },
+    {
+      "id": "AIME-2024-I-2",
+      "expected": 25,
+      "extracted": "25",
+      "correct": true,
+      "truncated": false,
+      "wall_s": 224.32679915428162,
+      "prompt_tokens": 62,
+      "completion_tokens": 2254,
+      "reasoning_chars": 4341,
+      "content_chars": 1072,
+      "decode_tok_per_s": 10.047840955684492,
+      "tpot_ms": 99.52386830269815
+    },
+    {
+      "id": "AIME-2024-I-3",
+      "expected": 80,
+      "extracted": "809",
+      "correct": false,
+      "truncated": false,
+      "wall_s": 265.40701055526733,
+      "prompt_tokens": 118,
+      "completion_tokens": 2592,
+      "reasoning_chars": 6241,
+      "content_chars": 422,
+      "decode_tok_per_s": 9.76613238127051,
+      "tpot_ms": 102.39467999817413
+    }
+  ],
+  "summary": {
+    "n": 3,
+    "completed": 3,
+    "correct": 2,
+    "truncated": 0,
+    "avg_wall_s": 204.87671160697937,
+    "avg_decode_tps": 9.922075909292749,
+    "avg_completion_tokens": 2029.6666666666667
+  }
+}

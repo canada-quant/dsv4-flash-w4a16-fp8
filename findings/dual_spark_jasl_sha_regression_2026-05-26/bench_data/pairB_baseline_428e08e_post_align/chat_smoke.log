@@ -1,0 +1,23 @@
+=== /health ===
+  OK
+
+=== /v1/models ===
+  served: ['DSV4-W4A16-FP8', 'deepseek-ai/DeepSeek-V4-Flash', 'deepseek-v4-flash']
+
+=== 4 chat completions ===
+--- prompt: Hello! What is 1+1? ---
+  1+1 equals 2....
+  -> 8 tok in 5.048s = 1.6 tok/s
+--- prompt: Write a haiku about Blackwell GPUs. ---
+  A black monolith,
+Silicon hums, heat shimmers—
+Frame rates climb the void....
+  -> 21 tok in 1.948s = 10.8 tok/s
+--- prompt: What is the capital of France? ---
+  The capital of France is Paris....
+  -> 8 tok in 1.107s = 7.2 tok/s
+--- prompt: Briefly explain Mixture of Experts in one sentence. ---
+  Mixture of Experts is a machine learning architecture that combines multiple specialized sub-models ("experts") with a gating network that learns to s...
+  -> 47 tok in 4.718s = 10.0 tok/s
+
+=== Result: 4/4 ===

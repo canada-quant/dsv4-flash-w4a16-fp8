@@ -1,0 +1,52 @@
+[smoke]
+[stage1] throughput c=1 P=1K D=1K
+[bench] base=http://100.66.113.93:8888 model=DSV4-W4A16-FP8 c=1 n=10 prompt=1024 decode=1024
+[bench] 1 warmup requests...
+[bench] running 10 measured requests at c=1...
+  + 1024 tok in 109.72s = 9.3 tok/s, TPOT 107.2ms
+  + 1024 tok in 100.91s = 10.1 tok/s, TPOT 98.5ms
+  + 1024 tok in 100.17s = 10.2 tok/s, TPOT 97.8ms
+  + 1024 tok in 107.89s = 9.5 tok/s, TPOT 105.4ms
+  + 1024 tok in 103.42s = 9.9 tok/s, TPOT 101.0ms
+  + 1024 tok in 101.76s = 10.1 tok/s, TPOT 99.4ms
+  + 1024 tok in 113.66s = 9.0 tok/s, TPOT 111.0ms
+  + 1024 tok in 96.14s = 10.7 tok/s, TPOT 93.9ms
+  + 1024 tok in 103.86s = 9.9 tok/s, TPOT 101.4ms
+  + 1024 tok in 93.59s = 10.9 tok/s, TPOT 91.4ms
+
+[bench] wrote /home/paul/dsv4-test-2gb10/results/pairA_baseline_428e08e/throughput_c1_p1k_d1k.json
+[bench] aggregate 9.9 tok/s | per-req median 10.0 tok/s | TPOT median 100.2ms
+[stage2] throughput c=1 P=64K D=2K
+[bench] base=http://100.66.113.93:8888 model=DSV4-W4A16-FP8 c=1 n=5 prompt=65536 decode=2048
+[bench] 1 warmup requests...
+[bench] running 5 measured requests at c=1...
+  + 2048 tok in 217.58s = 9.4 tok/s, TPOT 106.2ms
+  + 2048 tok in 222.91s = 9.2 tok/s, TPOT 108.8ms
+  + 2048 tok in 228.50s = 9.0 tok/s, TPOT 111.6ms
+  + 2048 tok in 225.49s = 9.1 tok/s, TPOT 110.1ms
+  + 2048 tok in 222.02s = 9.2 tok/s, TPOT 108.4ms
+
+[bench] wrote /home/paul/dsv4-test-2gb10/results/pairA_baseline_428e08e/throughput_c1_p64k_d2k.json
+[bench] aggregate 9.2 tok/s | per-req median 9.2 tok/s | TPOT median 108.8ms
+[stage3] AIME think-max 3 problems
+
+=== AIME-2024-I-1 (answer=204) ===
+  wall=124.9s tokens=1243 tps=10.0 truncated=False extracted=204 correct=True
+
+=== AIME-2024-I-2 (answer=25) ===
+  wall=224.3s tokens=2254 tps=10.0 truncated=False extracted=25 correct=True
+
+=== AIME-2024-I-3 (answer=80) ===
+  wall=265.4s tokens=2592 tps=9.8 truncated=False extracted=809 correct=False
+
+wrote /home/paul/dsv4-test-2gb10/results/pairA_baseline_428e08e/aime_think_max.json
+{
+  "n": 3,
+  "completed": 3,
+  "correct": 2,
+  "truncated": 0,
+  "avg_wall_s": 204.87671160697937,
+  "avg_decode_tps": 9.922075909292749,
+  "avg_completion_tokens": 2029.6666666666667
+}
+[done]

@@ -1,0 +1,65 @@
+{
+  "config": {
+    "base": "http://100.66.113.93:8888",
+    "model": "DSV4-W4A16-FP8",
+    "concurrency": 1,
+    "requests": 5,
+    "prompt_tokens": 65536,
+    "decode_tokens": 2048
+  },
+  "results": [
+    {
+      "wall_s": 217.57840394973755,
+      "prompt_tokens": 65541,
+      "completion_tokens": 2048,
+      "throughput_tps": 9.412698883815258,
+      "tpot_ms": 106.23945505358279
+    },
+    {
+      "wall_s": 222.90676736831665,
+      "prompt_tokens": 65541,
+      "completion_tokens": 2048,
+      "throughput_tps": 9.187697727525777,
+      "tpot_ms": 108.84119500406086
+    },
+    {
+      "wall_s": 228.5005087852478,
+      "prompt_tokens": 65541,
+      "completion_tokens": 2048,
+      "throughput_tps": 8.962780918465162,
+      "tpot_ms": 111.57251405529678
+    },
+    {
+      "wall_s": 225.49321961402893,
+      "prompt_tokens": 65541,
+      "completion_tokens": 2048,
+      "throughput_tps": 9.082313000388703,
+      "tpot_ms": 110.10411113966256
+    },
+    {
+      "wall_s": 222.02054452896118,
+      "prompt_tokens": 65541,
+      "completion_tokens": 2048,
+      "throughput_tps": 9.224371574914551,
+      "tpot_ms": 108.40846900828183
+    }
+  ],
+  "summary": {
+    "successful": 5,
+    "failed": 0,
+    "total_wall_s": 1116.5049574375153,
+    "total_output_tokens": 10240,
+    "aggregate_tok_per_s": 9.171477414217462,
+    "per_request_tps": {
+      "median": 9.187697727525777,
+      "mean": 9.17397242102189,
+      "min": 8.962780918465162,
+      "max": 9.412698883815258
+    },
+    "tpot_ms": {
+      "median": 108.84119500406086,
+      "p95": 110.10411113966256,
+      "mean": 109.03314885217696
+    }
+  }
+}

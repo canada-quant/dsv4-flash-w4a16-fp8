@@ -1,0 +1,58 @@
+[stage1] throughput c=1 P=1K D=1K (10 reqs)
+[bench] base=http://100.87.54.16:8888 model=DSV4-W4A16-FP8 c=1 n=10 prompt=1024 decode=1024
+[bench] 1 warmup requests...
+[bench] running 10 measured requests at c=1...
+  + 1024 tok in 86.47s = 11.8 tok/s, TPOT 84.4ms
+  + 1024 tok in 82.23s = 12.5 tok/s, TPOT 80.3ms
+  + 1024 tok in 87.23s = 11.7 tok/s, TPOT 85.2ms
+  + 1024 tok in 87.54s = 11.7 tok/s, TPOT 85.5ms
+  + 1024 tok in 77.28s = 13.3 tok/s, TPOT 75.5ms
+  + 1024 tok in 78.80s = 13.0 tok/s, TPOT 76.9ms
+  + 1024 tok in 78.92s = 13.0 tok/s, TPOT 77.1ms
+  + 1024 tok in 75.53s = 13.6 tok/s, TPOT 73.8ms
+  + 1024 tok in 84.91s = 12.1 tok/s, TPOT 82.9ms
+  + 1024 tok in 90.17s = 11.4 tok/s, TPOT 88.1ms
+
+[bench] wrote results/pairB_baseline_428e08e/throughput_c1_p1k_d1k.json
+[bench] aggregate 12.4 tok/s | per-req median 12.3 tok/s | TPOT median 81.6ms
+[stage2] throughput c=1 P=64K D=2K (5 reqs)
+[bench] base=http://100.87.54.16:8888 model=DSV4-W4A16-FP8 c=1 n=5 prompt=65536 decode=2048
+[bench] 1 warmup requests...
+[bench] running 5 measured requests at c=1...
+  + 2048 tok in 170.41s = 12.0 tok/s, TPOT 83.2ms
+  + 2048 tok in 172.49s = 11.9 tok/s, TPOT 84.2ms
+  + 2048 tok in 190.00s = 10.8 tok/s, TPOT 92.8ms
+  + 2048 tok in 196.88s = 10.4 tok/s, TPOT 96.1ms
+  + 2048 tok in 182.42s = 11.2 tok/s, TPOT 89.1ms
+
+[bench] wrote results/pairB_baseline_428e08e/throughput_c1_p64k_d2k.json
+[bench] aggregate 11.2 tok/s | per-req median 11.2 tok/s | TPOT median 89.1ms
+[stage3] long-reasoning think-max (3 AIME problems)
+
+=== AIME-2024-I-1 (answer=204) ===
+  wall=91.1s tokens=1154 tps=12.7 truncated=False extracted=204 correct=True
+
+=== AIME-2024-I-2 (answer=25) ===
+  wall=181.4s tokens=2414 tps=13.3 truncated=False extracted=25 correct=True
+
+=== AIME-2024-I-3 (answer=80) ===
+  wall=208.8s tokens=2602 tps=12.5 truncated=False extracted=809 correct=False
+
+wrote results/pairB_baseline_428e08e/aime_think_max.json
+{
+  "n": 3,
+  "completed": 3,
+  "correct": 2,
+  "truncated": 0,
+  "avg_wall_s": 160.41256507237753,
+  "avg_decode_tps": 12.8143272959109,
+  "avg_completion_tokens": 2056.6666666666665
+}
+[stage4] medium-context throughput c=1 P=256K D=1K (2 reqs)
+[bench] base=http://100.87.54.16:8888 model=DSV4-W4A16-FP8 c=1 n=2 prompt=262144 decode=1024
+[bench] 1 warmup requests...
+[bench] running 2 measured requests at c=1...
+  request error: timed out
+  request error: timed out
+[bench] ERROR: no successful requests
+[bench-suite] complete

@@ -1,0 +1,41 @@
+=== cell mml=524288 mns=1 at 2026-05-26T17:35:23Z ===
+status=EXIT head=exited worker=exited boot_s=17
+
+==========
+== CUDA ==
+==========
+
+CUDA Version 13.2.0
+
+Container image Copyright (c) 2016-2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+
+This container image and its contents are governed by the NVIDIA Deep Learning Container License.
+By pulling and using the container, you accept the terms and conditions of this license:
+https://developer.nvidia.com/ngc/nvidia-deep-learning-container-license
+
+A copy of this license is made available in this container at /NGC-DL-CONTAINER-LICENSE for your convenience.
+
+usage: vllm serve [model_tag] [options]
+vllm serve: error: argument --compilation-config/-cc: 1 validation error for CompilationConfig
+  Invalid JSON: expected value at line 1 column 1 [type=json_invalid, input_value='cudagraph_mode:FULL_AND_PIECEWISE', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/json_invalid
+----- WORKER -----
+
+==========
+== CUDA ==
+==========
+
+CUDA Version 13.2.0
+
+Container image Copyright (c) 2016-2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+
+This container image and its contents are governed by the NVIDIA Deep Learning Container License.
+By pulling and using the container, you accept the terms and conditions of this license:
+https://developer.nvidia.com/ngc/nvidia-deep-learning-container-license
+
+A copy of this license is made available in this container at /NGC-DL-CONTAINER-LICENSE for your convenience.
+
+usage: vllm serve [model_tag] [options]
+vllm serve: error: argument --compilation-config/-cc: 1 validation error for CompilationConfig
+  Invalid JSON: expected value at line 1 column 1 [type=json_invalid, input_value='cudagraph_mode:FULL_AND_PIECEWISE', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/json_invalid

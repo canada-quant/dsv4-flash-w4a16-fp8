@@ -1,0 +1,15 @@
+=== context wall sweep at seqs=1 ===
+=== cell mml=262144 mns=1 at 2026-05-26T18:32:34Z ===
+ctx262144_seq1 READY_NOSMOKE 336s
+=== cell mml=524288 mns=1 at 2026-05-26T18:38:10Z ===
+ctx524288_seq1 READY_NOSMOKE 337s
+=== cell mml=1048576 mns=1 at 2026-05-26T18:43:47Z ===
+ctx1048576_seq1 READY_NOSMOKE 336s
+=== cell mml=1572864 mns=1 at 2026-05-26T18:49:23Z ===
+ctx1572864_seq1 FAIL_rc6 54s
+=== cell mml=2097152 mns=1 at 2026-05-26T18:50:17Z ===
+ctx2097152_seq1 FAIL_rc6 48s
+=== concurrency wall sweep at ctx=262144 ===
+=== cell mml=262144 mns=2 at 2026-05-26T18:51:05Z ===
+ctx262144_seq2 FAIL_rc124 1800s
+=== cell mml=262144 mns=4 at 2026-05-26T19:21:06Z ===
