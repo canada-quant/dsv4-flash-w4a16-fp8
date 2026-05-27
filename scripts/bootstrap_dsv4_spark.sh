@@ -172,15 +172,22 @@ if [[ $SKIP_BUILD -eq 0 ]]; then
     curl -fsSL -o kylesayrs-deepseek-ct.patch '${DSV4_REPO_RAW}/scripts/kylesayrs-deepseek-ct.patch'
     curl -fsSL -o patch_v4_packed_mapping.py  '${DSV4_REPO_RAW}/scripts/patch_v4_packed_mapping.py'
 
-    # Build + copy in one shot.
+    # Build only — copy is handled separately to avoid F005 (short-form WORKER_HOST
+    # not resolvable from inside the head spark's shell). build-and-copy.sh -c uses
+    # ssh \$WORKER_HOST which only works if the worker is reachable via DNS or
+    # known-hosts from the head.
     ./build-and-copy.sh \
       -t '${IMAGE_TAG}' \
       --vllm-ref '${VLLM_REF}' \
       --rebuild-vllm \
-      -c '${WORKER_HOST}' \
       --full-log
   "
-  log "  build done — image present on both Sparks"
+  # F005 fix (2026-05-26): manually transfer image over QSFP IP (always resolvable,
+  # 200 Gbps fast) instead of relying on build-and-copy.sh -c hitting an unresolvable hostname.
+  log "  build done; transferring image to worker via QSFP (\$WORKER_QSFP_IP)..."
+  ssh $SSH_OPTS "$H" "docker save '${IMAGE_TAG}' | gzip -1 | \
+    ssh -o StrictHostKeyChecking=no pcozz@'${WORKER_QSFP_IP}' 'gunzip | docker load'"
+  log "  image present on both Sparks"
 else
   log "[4-5/9] skipping build (--skip-build)"
 fi
