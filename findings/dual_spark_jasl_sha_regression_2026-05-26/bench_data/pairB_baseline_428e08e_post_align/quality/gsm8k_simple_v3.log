@@ -1,0 +1,15 @@
+[gsm8k] downloading test set from https://raw.githubusercontent.com/openai/grade-school-math/master/grade_school_math/data/test.jsonl
+[gsm8k] loaded 1319 items, taking first 50
+  [1/50] correct so far: 1/1 (100.0%)
+  [2/50] correct so far: 2/2 (100.0%)
+  [3/50] correct so far: 2/3 (66.7%)
+  [4/50] correct so far: 3/4 (75.0%)
+  [5/50] correct so far: 4/5 (80.0%)
+  [10/50] correct so far: 9/10 (90.0%)
+  [20/50] correct so far: 17/20 (85.0%)
+  [30/50] correct so far: 27/30 (90.0%)
+  [40/50] correct so far: 37/40 (92.5%)
+  [50/50] correct so far: 47/50 (94.0%)
+
+GSM8K result: 47/50 = 94.00%
+wrote /home/paul/dsv4-test-2gb10/results/pairB_baseline_428e08e_post_align/quality/gsm8k_simple_v3.json

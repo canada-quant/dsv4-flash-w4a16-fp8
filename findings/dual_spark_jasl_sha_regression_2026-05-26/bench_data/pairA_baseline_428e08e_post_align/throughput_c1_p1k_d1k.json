@@ -1,0 +1,100 @@
+{
+  "config": {
+    "base": "http://100.66.113.93:8888",
+    "model": "DSV4-W4A16-FP8",
+    "concurrency": 1,
+    "requests": 10,
+    "prompt_tokens": 1024,
+    "decode_tokens": 1024
+  },
+  "results": [
+    {
+      "wall_s": 87.69257855415344,
+      "prompt_tokens": 1031,
+      "completion_tokens": 1024,
+      "throughput_tps": 11.677156914340724,
+      "tpot_ms": 85.63728374429047
+    },
+    {
+      "wall_s": 84.70480370521545,
+      "prompt_tokens": 1031,
+      "completion_tokens": 1024,
+      "throughput_tps": 12.089042831191286,
+      "tpot_ms": 82.71953486837447
+    },
+    {
+      "wall_s": 86.63912177085876,
+      "prompt_tokens": 1031,
+      "completion_tokens": 1024,
+      "throughput_tps": 11.819141042406368,
+      "tpot_ms": 84.60851735435426
+    },
+    {
+      "wall_s": 84.08320665359497,
+      "prompt_tokens": 1031,
+      "completion_tokens": 1024,
+      "throughput_tps": 12.178412797916515,
+      "tpot_ms": 82.11250649765134
+    },
+    {
+      "wall_s": 77.0336081981659,
+      "prompt_tokens": 1031,
+      "completion_tokens": 1024,
+      "throughput_tps": 13.292899345514243,
+      "tpot_ms": 75.22813300602138
+    },
+    {
+      "wall_s": 84.97437810897827,
+      "prompt_tokens": 1031,
+      "completion_tokens": 1024,
+      "throughput_tps": 12.050691311759135,
+      "tpot_ms": 82.9827911220491
+    },
+    {
+      "wall_s": 87.44130420684814,
+      "prompt_tokens": 1031,
+      "completion_tokens": 1024,
+      "throughput_tps": 11.710712795152972,
+      "tpot_ms": 85.39189863950014
+    },
+    {
+      "wall_s": 83.85688376426697,
+      "prompt_tokens": 1031,
+      "completion_tokens": 1024,
+      "throughput_tps": 12.211281340701884,
+      "tpot_ms": 81.89148805104196
+    },
+    {
+      "wall_s": 88.36279535293579,
+      "prompt_tokens": 1031,
+      "completion_tokens": 1024,
+      "throughput_tps": 11.588587661922336,
+      "tpot_ms": 86.29179233685136
+    },
+    {
+      "wall_s": 84.40933775901794,
+      "prompt_tokens": 1031,
+      "completion_tokens": 1024,
+      "throughput_tps": 12.131359245151762,
+      "tpot_ms": 82.43099390529096
+    }
+  ],
+  "summary": {
+    "successful": 10,
+    "failed": 0,
+    "total_wall_s": 849.200163602829,
+    "total_output_tokens": 10240,
+    "aggregate_tok_per_s": 12.058405590215182,
+    "per_request_tps": {
+      "median": 12.06986707147521,
+      "mean": 12.074928528605723,
+      "min": 11.588587661922336,
+      "max": 13.292899345514243
+    },
+    "tpot_ms": {
+      "median": 82.85116299521178,
+      "p95": 85.63728374429047,
+      "mean": 82.92949395254254
+    }
+  }
+}

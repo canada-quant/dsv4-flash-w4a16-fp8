@@ -1,0 +1,58 @@
+[smoke]
+[stage1] throughput c=1 P=1K D=1K (10 reqs)
+[bench] base=http://100.66.113.93:8888 model=DSV4-W4A16-FP8 c=1 n=10 prompt=1024 decode=1024
+[bench] 1 warmup requests...
+[bench] running 10 measured requests at c=1...
+  + 1024 tok in 87.69s = 11.7 tok/s, TPOT 85.6ms
+  + 1024 tok in 84.70s = 12.1 tok/s, TPOT 82.7ms
+  + 1024 tok in 86.64s = 11.8 tok/s, TPOT 84.6ms
+  + 1024 tok in 84.08s = 12.2 tok/s, TPOT 82.1ms
+  + 1024 tok in 77.03s = 13.3 tok/s, TPOT 75.2ms
+  + 1024 tok in 84.97s = 12.1 tok/s, TPOT 83.0ms
+  + 1024 tok in 87.44s = 11.7 tok/s, TPOT 85.4ms
+  + 1024 tok in 83.86s = 12.2 tok/s, TPOT 81.9ms
+  + 1024 tok in 88.36s = 11.6 tok/s, TPOT 86.3ms
+  + 1024 tok in 84.41s = 12.1 tok/s, TPOT 82.4ms
+
+[bench] wrote /home/paul/dsv4-test-2gb10/results/pairA_baseline_428e08e_post_align/throughput_c1_p1k_d1k.json
+[bench] aggregate 12.1 tok/s | per-req median 12.1 tok/s | TPOT median 82.9ms
+[stage2] throughput c=1 P=64K D=2K (5 reqs)
+[bench] base=http://100.66.113.93:8888 model=DSV4-W4A16-FP8 c=1 n=5 prompt=65536 decode=2048
+[bench] 1 warmup requests...
+[bench] running 5 measured requests at c=1...
+  + 2048 tok in 196.92s = 10.4 tok/s, TPOT 96.2ms
+  + 2048 tok in 188.91s = 10.8 tok/s, TPOT 92.2ms
+  + 2048 tok in 200.46s = 10.2 tok/s, TPOT 97.9ms
+  + 2048 tok in 189.02s = 10.8 tok/s, TPOT 92.3ms
+  + 2048 tok in 193.04s = 10.6 tok/s, TPOT 94.3ms
+
+[bench] wrote /home/paul/dsv4-test-2gb10/results/pairA_baseline_428e08e_post_align/throughput_c1_p64k_d2k.json
+[bench] aggregate 10.6 tok/s | per-req median 10.6 tok/s | TPOT median 94.3ms
+[stage3] long-reasoning think-max (5 AIME problems)
+
+=== AIME-2024-I-1 (answer=204) ===
+  wall=120.1s tokens=1367 tps=11.4 truncated=False extracted=204 correct=True
+
+=== AIME-2024-I-2 (answer=25) ===
+  wall=119.0s tokens=1432 tps=12.0 truncated=False extracted=25 correct=True
+
+=== AIME-2024-I-3 (answer=80) ===
+  wall=261.5s tokens=3090 tps=11.8 truncated=False extracted=809 correct=False
+
+=== AIME-2024-I-4 (answer=116) ===
+  wall=120.0s tokens=1426 tps=11.9 truncated=False extracted=116 correct=True
+
+=== AIME-2024-I-5 (answer=104) ===
+  wall=1207.0s tokens=14725 tps=12.2 truncated=False extracted=104 correct=True
+
+wrote /home/paul/dsv4-test-2gb10/results/pairA_baseline_428e08e_post_align/aime_think_max.json
+{
+  "n": 5,
+  "completed": 5,
+  "correct": 4,
+  "truncated": 0,
+  "avg_wall_s": 365.5237734794617,
+  "avg_decode_tps": 11.863485246043908,
+  "avg_completion_tokens": 4408.0
+}
+[done]

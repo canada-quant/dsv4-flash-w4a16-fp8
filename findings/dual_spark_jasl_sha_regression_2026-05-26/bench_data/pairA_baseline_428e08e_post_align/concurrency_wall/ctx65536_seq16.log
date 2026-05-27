@@ -1,0 +1,136 @@
+=== cell mml=65536 mns=16 at 2026-05-27T00:31:11Z ===
+[17:31:11] [1/9] SSH reachability check...
+[17:31:12]   ok — both Sparks reachable
+[17:31:12] [2/9] skipping model download (--skip-download)
+[17:31:12] [3/9] skipping network setup (--skip-network)
+[17:31:12] [4-5/9] skipping build (--skip-build)
+[17:31:12] [6/9] Stopping any existing vllm_node containers...
+vllm_node
+vllm_node
+[17:31:20] [7/9] Launching worker rank 1 on spark-2 (headless)...
+f873d0088d54591df17b09b4a1d7d38af0b426fd41770c7b092b3615645d0cf3
+[17:31:26] [8/9] Launching head rank 0 on spark-1 (API server on :8888)...
+3f72e780b7e80171dd3c361c1ac5beff5ebb6c98d1e0d8949b89f77fa45b5313
+[17:31:27] [9/9] Waiting for /health=200 on http://spark-1:8888 (~5-7 min cold start)...
+[17:31:28]   still booting (30s elapsed, head=running, worker=running)...
+[17:31:59]   still booting (60s elapsed, head=running, worker=running)...
+[17:32:30]   still booting (90s elapsed, head=running, worker=running)...
+[17:33:02]   still booting (120s elapsed, head=running, worker=running)...
+[17:33:34]   still booting (150s elapsed, head=running, worker=running)...
+[17:34:05]   still booting (180s elapsed, head=running, worker=running)...
+[17:34:37]   still booting (210s elapsed, head=running, worker=running)...
+[17:35:09]   still booting (240s elapsed, head=running, worker=running)...
+[17:35:41]   still booting (270s elapsed, head=running, worker=running)...
+[17:36:13]   still booting (300s elapsed, head=running, worker=running)...
+[17:36:45]   still booting (330s elapsed, head=running, worker=running)...
+[17:37:16]   still booting (360s elapsed, head=running, worker=running)...
+[17:37:48]   still booting (390s elapsed, head=running, worker=running)...
+[17:38:19] 
+[17:38:19] ========================================================================
+[17:38:19] ENGINE READY ✓
+[17:38:19]   endpoint:        http://spark-1:8888/v1
+[17:38:19]   model names:     DSV4-W4A16-FP8 | deepseek-ai/DeepSeek-V4-Flash | deepseek-v4-flash
+[17:38:19]   context:         65536 tokens, max-num-seqs=16
+[17:38:19]   vllm ref:        jasl/vllm@428e08e
+[17:38:19]   image:           vllm-w4a16-dsv4:baseline-428e08e
+[17:38:19] ========================================================================
+[17:38:19] 
+[17:38:19] Build provenance written to /tmp/dsv4-spark-build-metadata-20260526-173819.yaml:
+  build_date: 2026-05-26T16:23:35Z
+  build_script_commit: 594631f7aed06f7f3f77a7a26fa7def1d3a3b5d1
+  vllm_version: 0.1.dev16268+ga1cc4fdde.d20260526.cu132
+  vllm_commit: a1cc4fddeea50b7d44e8f0c62261305cc189caa8
+  flashinfer_commit: 56d537a1
+  gpu_arch: 12.1a
+  base_image: nvidia/cuda:13.2.0-devel-ubuntu24.04
+  build_args:
+    vllm_ref: 428e08e
+    transformers_5: false
+    exp_mxfp4: false
+    vllm_prs: ""
+    build_jobs: 16
+[17:38:19] 
+[17:38:19] If you hit issues, please paste the contents of /tmp/dsv4-spark-build-metadata-20260526-173819.yaml with your bug report.
+[17:38:19] 
+[17:38:19] Smoke test:
+[17:38:19] 
+  curl http://spark-1:8888/v1/chat/completions \
+    -H "Content-Type: application/json" \
+    -d '{
+      "model": "deepseek-v4-flash",
+      "messages": [{"role": "user", "content": "What is 7*8?"}],
+      "max_tokens": 50,
+      "temperature": 0
+    }'
+[17:38:19] 
+[17:38:19] More examples (think-max, tool calling): findings/QUICKSTART_DUAL_SPARK.md §6
+[bench] base=http://100.66.113.93:8888 model=DSV4-W4A16-FP8 c=16 n=64 prompt=512 decode=256
+[bench] 1 warmup requests...
+[bench] running 64 measured requests at c=16...
+  +  256 tok in 37.65s = 6.8 tok/s, TPOT 147.1ms
+  +  256 tok in 37.65s = 6.8 tok/s, TPOT 147.1ms
+  +  256 tok in 37.89s = 6.8 tok/s, TPOT 148.0ms
+  +  256 tok in 37.89s = 6.8 tok/s, TPOT 148.0ms
+  +  256 tok in 37.89s = 6.8 tok/s, TPOT 148.0ms
+  +  256 tok in 37.89s = 6.8 tok/s, TPOT 148.0ms
+  +  256 tok in 37.89s = 6.8 tok/s, TPOT 148.0ms
+  +  256 tok in 37.89s = 6.8 tok/s, TPOT 148.0ms
+  +  256 tok in 37.89s = 6.8 tok/s, TPOT 148.0ms
+  +  256 tok in 37.89s = 6.8 tok/s, TPOT 148.0ms
+  +  256 tok in 37.89s = 6.8 tok/s, TPOT 148.0ms
+  +  256 tok in 37.89s = 6.8 tok/s, TPOT 148.0ms
+  +  256 tok in 37.89s = 6.8 tok/s, TPOT 148.0ms
+  +  256 tok in 37.89s = 6.8 tok/s, TPOT 148.0ms
+  +  256 tok in 37.89s = 6.8 tok/s, TPOT 148.0ms
+  +  256 tok in 37.89s = 6.8 tok/s, TPOT 148.0ms
+  +  256 tok in 31.39s = 8.2 tok/s, TPOT 122.6ms
+  +  256 tok in 31.39s = 8.2 tok/s, TPOT 122.6ms
+  +  256 tok in 31.39s = 8.2 tok/s, TPOT 122.6ms
+  +  256 tok in 31.39s = 8.2 tok/s, TPOT 122.6ms
+  +  256 tok in 31.39s = 8.2 tok/s, TPOT 122.6ms
+  +  256 tok in 31.39s = 8.2 tok/s, TPOT 122.6ms
+  +  256 tok in 31.39s = 8.2 tok/s, TPOT 122.6ms
+  +  256 tok in 31.39s = 8.2 tok/s, TPOT 122.6ms
+  +  256 tok in 31.39s = 8.2 tok/s, TPOT 122.6ms
+  +  256 tok in 31.39s = 8.2 tok/s, TPOT 122.6ms
+  +  256 tok in 31.39s = 8.2 tok/s, TPOT 122.6ms
+  +  256 tok in 31.39s = 8.2 tok/s, TPOT 122.6ms
+  +  256 tok in 31.39s = 8.2 tok/s, TPOT 122.6ms
+  +  256 tok in 31.39s = 8.2 tok/s, TPOT 122.6ms
+  +  256 tok in 31.39s = 8.2 tok/s, TPOT 122.6ms
+  +  256 tok in 31.39s = 8.2 tok/s, TPOT 122.6ms
+  +  256 tok in 30.90s = 8.3 tok/s, TPOT 120.7ms
+  +  256 tok in 30.90s = 8.3 tok/s, TPOT 120.7ms
+  +  256 tok in 30.90s = 8.3 tok/s, TPOT 120.7ms
+  +  256 tok in 30.90s = 8.3 tok/s, TPOT 120.7ms
+  +  256 tok in 30.90s = 8.3 tok/s, TPOT 120.7ms
+  +  256 tok in 30.90s = 8.3 tok/s, TPOT 120.7ms
+  +  256 tok in 30.90s = 8.3 tok/s, TPOT 120.7ms
+  +  256 tok in 30.90s = 8.3 tok/s, TPOT 120.7ms
+  +  256 tok in 30.90s = 8.3 tok/s, TPOT 120.7ms
+  +  256 tok in 30.90s = 8.3 tok/s, TPOT 120.7ms
+  +  256 tok in 30.90s = 8.3 tok/s, TPOT 120.7ms
+  +  256 tok in 30.90s = 8.3 tok/s, TPOT 120.7ms
+  +  256 tok in 30.90s = 8.3 tok/s, TPOT 120.7ms
+  +  256 tok in 30.91s = 8.3 tok/s, TPOT 120.7ms
+  +  256 tok in 30.90s = 8.3 tok/s, TPOT 120.7ms
+  +  256 tok in 30.90s = 8.3 tok/s, TPOT 120.7ms
+  +  256 tok in 31.89s = 8.0 tok/s, TPOT 124.6ms
+  +  256 tok in 31.89s = 8.0 tok/s, TPOT 124.6ms
+  +  256 tok in 31.90s = 8.0 tok/s, TPOT 124.6ms
+  +  256 tok in 31.90s = 8.0 tok/s, TPOT 124.6ms
+  +  256 tok in 31.90s = 8.0 tok/s, TPOT 124.6ms
+  +  256 tok in 31.90s = 8.0 tok/s, TPOT 124.6ms
+  +  256 tok in 31.90s = 8.0 tok/s, TPOT 124.6ms
+  +  256 tok in 31.90s = 8.0 tok/s, TPOT 124.6ms
+  +  256 tok in 31.90s = 8.0 tok/s, TPOT 124.6ms
+  +  256 tok in 31.90s = 8.0 tok/s, TPOT 124.6ms
+  +  256 tok in 31.90s = 8.0 tok/s, TPOT 124.6ms
+  +  256 tok in 31.90s = 8.0 tok/s, TPOT 124.6ms
+  +  256 tok in 31.90s = 8.0 tok/s, TPOT 124.6ms
+  +  256 tok in 31.90s = 8.0 tok/s, TPOT 124.6ms
+  +  256 tok in 31.90s = 8.0 tok/s, TPOT 124.6ms
+  +  256 tok in 31.90s = 8.0 tok/s, TPOT 124.6ms
+
+[bench] wrote results/pairA_baseline_428e08e_post_align/concurrency_wall/ctx65536_seq16_bench.json
+[bench] aggregate 124.0 tok/s | per-req median 8.1 tok/s | TPOT median 123.6ms

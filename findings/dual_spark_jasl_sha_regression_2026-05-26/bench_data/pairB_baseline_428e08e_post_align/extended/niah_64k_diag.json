@@ -1,0 +1,23 @@
+{
+  "config": {
+    "base": "http://100.87.54.16:8888",
+    "model": "DSV4-W4A16-FP8",
+    "context_tokens": 65536,
+    "depths": [
+      0.5
+    ]
+  },
+  "results": [
+    {
+      "depth": 0.5,
+      "ctx": 65536,
+      "error": "HTTP Error 500: Internal Server Error"
+    }
+  ],
+  "summary": {
+    "n": 1,
+    "code_found": 0,
+    "city_found": 0,
+    "both_found": 0
+  }
+}

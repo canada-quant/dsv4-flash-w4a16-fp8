@@ -1,0 +1,46 @@
+2026-05-26:17:53:46 WARNING  [config.evaluate_config:287] --limit SHOULD ONLY BE USED FOR TESTING. REAL METRICS SHOULD NOT BE COMPUTED USING LIMIT.
+2026-05-26:17:53:46 INFO     [config.evaluate_config:307] Using default fewshot_as_multiturn=True.
+2026-05-26:17:53:53 INFO     [_cli.run:388] Selected Tasks: ['gsm8k']
+2026-05-26:17:53:53 INFO     [evaluator:214] Setting random seed to 0 | Setting numpy seed to 1234 | Setting torch manual seed to 1234 | Setting fewshot manual seed to 1234
+2026-05-26:17:53:53 INFO     [evaluator:239] Initializing local-completions model, with arguments: {'base_url': 'http://100.87.54.16:8888/v1/completions', 'model': 'DSV4-W4A16-FP8', 'max_concurrent': 1, 'tokenized_requests': False}
+2026-05-26:17:53:53 INFO     [models.openai_completions:42] Remote tokenizer not supported. Using huggingface tokenizer backend.
+2026-05-26:17:53:53 INFO     [models.api_models:179] Using max length 2048 - 1
+2026-05-26:17:53:53 INFO     [models.api_models:182] Concurrent requests are disabled. To enable concurrent requests, set `num_concurrent` > 1.
+2026-05-26:17:53:53 INFO     [models.api_models:200] Using tokenizer huggingface
+Traceback (most recent call last):
+  File "/home/paul/.local/bin/lm-eval", line 8, in <module>
+    sys.exit(cli_evaluate())
+             ^^^^^^^^^^^^^^
+  File "/home/paul/.local/lib/python3.12/site-packages/lm_eval/__main__.py", line 10, in cli_evaluate
+    parser.execute(args)
+  File "/home/paul/.local/lib/python3.12/site-packages/lm_eval/_cli/harness.py", line 60, in execute
+    args.func(args)
+  File "/home/paul/.local/lib/python3.12/site-packages/lm_eval/_cli/run.py", line 391, in _execute
+    results = simple_evaluate(
+              ^^^^^^^^^^^^^^^^
+  File "/home/paul/.local/lib/python3.12/site-packages/lm_eval/utils.py", line 575, in _wrapper
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/paul/.local/lib/python3.12/site-packages/lm_eval/evaluator.py", line 242, in simple_evaluate
+    lm = lm_eval.api.registry.get_model(model).create_from_arg_obj(
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/paul/.local/lib/python3.12/site-packages/lm_eval/api/model.py", line 169, in create_from_arg_obj
+    return cls(**arg_dict, **additional_config)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/paul/.local/lib/python3.12/site-packages/lm_eval/models/openai_completions.py", line 52, in __init__
+    super().__init__(
+  File "/home/paul/.local/lib/python3.12/site-packages/lm_eval/models/api_models.py", line 207, in __init__
+    import transformers
+  File "/home/paul/.local/lib/python3.12/site-packages/transformers/__init__.py", line 30, in <module>
+    from . import dependency_versions_check
+  File "/home/paul/.local/lib/python3.12/site-packages/transformers/dependency_versions_check.py", line 56, in <module>
+    require_version_core(deps[pkg])
+  File "/home/paul/.local/lib/python3.12/site-packages/transformers/utils/versions.py", line 116, in require_version_core
+    return require_version(requirement, hint)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/paul/.local/lib/python3.12/site-packages/transformers/utils/versions.py", line 110, in require_version
+    _compare_versions(op, got_ver, want_ver, requirement, pkg, hint)
+  File "/home/paul/.local/lib/python3.12/site-packages/transformers/utils/versions.py", line 43, in _compare_versions
+    raise ImportError(
+ImportError: tokenizers>=0.22.0,<=0.23.0 is required for a normal functioning of this module, but found tokenizers==0.23.1.
+Try: `pip install transformers -U` or `pip install -e '.[dev]'` if you're working with git main

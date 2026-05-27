@@ -1,0 +1,380 @@
+=== cell mml=2097152 mns=1 at 2026-05-26T18:50:17Z ===
+[11:50:17] [1/9] SSH reachability check...
+[11:50:18]   ok — both Sparks reachable
+[11:50:18] [2/9] skipping model download (--skip-download)
+[11:50:18] [3/9] skipping network setup (--skip-network)
+[11:50:18] [4-5/9] skipping build (--skip-build)
+[11:50:18] [6/9] Stopping any existing vllm_node containers...
+vllm_node
+vllm_node
+[11:50:21] [7/9] Launching worker rank 1 on spark-6 (headless)...
+466adbce2818fb4dec51225b8c85d909b58cbae730e400364b8e9b0e35982d2f
+[11:50:27] [8/9] Launching head rank 0 on spark-5 (API server on :8888)...
+7da7836ccc7b97a3247252a9b6b008bd74ad22998281da3bef6918350f06a8fd
+[11:50:27] [9/9] Waiting for /health=200 on http://spark-5:8888 (~5-7 min cold start)...
+[11:50:29]   still booting (30s elapsed, head=running, worker=running)...
+engine container exited on head:
+
+================================================================
+FAILURE DIAGNOSTICS — head (pcozz@spark-5)
+================================================================
+--- last 300 lines of vllm_node logs ---
+
+==========
+== CUDA ==
+==========
+
+CUDA Version 13.2.0
+
+Container image Copyright (c) 2016-2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+
+This container image and its contents are governed by the NVIDIA Deep Learning Container License.
+By pulling and using the container, you accept the terms and conditions of this license:
+https://developer.nvidia.com/ngc/nvidia-deep-learning-container-license
+
+A copy of this license is made available in this container at /NGC-DL-CONTAINER-LICENSE for your convenience.
+
+(APIServer pid=1) INFO 05-26 18:50:37 [utils.py:299] 
+(APIServer pid=1) INFO 05-26 18:50:37 [utils.py:299]        █     █     █▄   ▄█
+(APIServer pid=1) INFO 05-26 18:50:37 [utils.py:299]  ▄▄ ▄█ █     █     █ ▀▄▀ █  version 0.1.dev16268+g76b70802d.d20260526
+(APIServer pid=1) INFO 05-26 18:50:37 [utils.py:299]   █▄█▀ █     █     █     █  model   canada-quant/DeepSeek-V4-Flash-W4A16-FP8
+(APIServer pid=1) INFO 05-26 18:50:37 [utils.py:299]    ▀▀  ▀▀▀▀▀ ▀▀▀▀▀ ▀     ▀
+(APIServer pid=1) INFO 05-26 18:50:37 [utils.py:299] 
+(APIServer pid=1) INFO 05-26 18:50:37 [utils.py:233] non-default args: {'model_tag': 'canada-quant/DeepSeek-V4-Flash-W4A16-FP8', 'enable_auto_tool_choice': True, 'tool_call_parser': 'deepseek_v4', 'host': '0.0.0.0', 'port': 8888, 'model': 'canada-quant/DeepSeek-V4-Flash-W4A16-FP8', 'tokenizer_mode': 'deepseek_v4', 'trust_remote_code': True, 'max_model_len': 2097152, 'served_model_name': ['DSV4-W4A16-FP8', 'deepseek-ai/DeepSeek-V4-Flash', 'deepseek-v4-flash'], 'reasoning_parser': 'deepseek_v4', 'master_addr': '192.168.101.1', 'nnodes': 2, 'tensor_parallel_size': 2, 'block_size': 256, 'gpu_memory_utilization': 0.9, 'kv_cache_dtype': 'fp8', 'max_num_batched_tokens': 8192, 'max_num_seqs': 1, 'compilation_config': {'mode': None, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['all'], 'ir_enable_torch_wrap': None, 'splitting_ops': None, 'compile_mm_encoder': False, 'cudagraph_mm_encoder': False, 'encoder_cudagraph_token_budgets': [], 'encoder_cudagraph_max_vision_items_per_batch': 0, 'encoder_cudagraph_max_frames_per_batch': None, 'compile_sizes': None, 'compile_ranges_endpoints': None, 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'size_asserts': False, 'alignment_asserts': False, 'scalar_asserts': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_AND_PIECEWISE: (2, 1)>, 'cudagraph_num_of_warmups': 0, 'cudagraph_capture_sizes': None, 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': None, 'pass_config': {}, 'max_cudagraph_capture_size': None, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': None, 'static_all_moe_layers': []}}
+(APIServer pid=1) INFO 05-26 18:50:37 [arg_utils.py:726] HF_HUB_OFFLINE is True, replace model_id [canada-quant/DeepSeek-V4-Flash-W4A16-FP8] to model_path [/root/.cache/huggingface/hub/models--canada-quant--DeepSeek-V4-Flash-W4A16-FP8/snapshots/087ae8abe03d7f8961e8adcb9d59206d3ce8377e]
+(APIServer pid=1) WARNING 05-26 18:50:37 [envs.py:1874] Unknown vLLM environment variable detected: VLLM_BASE_DIR
+(APIServer pid=1) INFO 05-26 18:50:42 [nixl_utils.py:20] Setting UCX_RCACHE_MAX_UNRELEASED to '1024' to avoid a rare memory leak in UCX when using NIXL.
+(APIServer pid=1) WARNING 05-26 18:50:42 [nixl_utils.py:34] NIXL is not available
+(APIServer pid=1) WARNING 05-26 18:50:42 [nixl_utils.py:44] NIXL agent config is not available
+(APIServer pid=1) INFO 05-26 18:50:42 [model.py:563] Resolved architecture: DeepseekV4ForCausalLM
+(APIServer pid=1) Traceback (most recent call last):
+(APIServer pid=1)   File "/usr/local/bin/vllm", line 10, in <module>
+(APIServer pid=1)     sys.exit(main())
+(APIServer pid=1)              ^^^^^^
+(APIServer pid=1)   File "/usr/local/lib/python3.12/dist-packages/vllm/entrypoints/cli/main.py", line 92, in main
+(APIServer pid=1)     args.dispatch_function(args)
+(APIServer pid=1)   File "/usr/local/lib/python3.12/dist-packages/vllm/entrypoints/cli/serve.py", line 122, in cmd
+(APIServer pid=1)     uvloop.run(run_server(args))
+(APIServer pid=1)   File "/usr/local/lib/python3.12/dist-packages/uvloop/__init__.py", line 96, in run
+(APIServer pid=1)     return __asyncio.run(
+(APIServer pid=1)            ^^^^^^^^^^^^^^
+(APIServer pid=1)   File "/usr/lib/python3.12/asyncio/runners.py", line 194, in run
+(APIServer pid=1)     return runner.run(main)
+(APIServer pid=1)            ^^^^^^^^^^^^^^^^
+(APIServer pid=1)   File "/usr/lib/python3.12/asyncio/runners.py", line 118, in run
+(APIServer pid=1)     return self._loop.run_until_complete(task)
+(APIServer pid=1)            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=1)   File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+(APIServer pid=1)   File "/usr/local/lib/python3.12/dist-packages/uvloop/__init__.py", line 48, in wrapper
+(APIServer pid=1)     return await main
+(APIServer pid=1)            ^^^^^^^^^^
+(APIServer pid=1)   File "/usr/local/lib/python3.12/dist-packages/vllm/entrypoints/openai/api_server.py", line 678, in run_server
+(APIServer pid=1)     await run_server_worker(listen_address, sock, args, **uvicorn_kwargs)
+(APIServer pid=1)   File "/usr/local/lib/python3.12/dist-packages/vllm/entrypoints/openai/api_server.py", line 692, in run_server_worker
+(APIServer pid=1)     async with build_async_engine_client(
+(APIServer pid=1)   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+(APIServer pid=1)     return await anext(self.gen)
+(APIServer pid=1)            ^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=1)   File "/usr/local/lib/python3.12/dist-packages/vllm/entrypoints/openai/api_server.py", line 100, in build_async_engine_client
+(APIServer pid=1)     async with build_async_engine_client_from_engine_args(
+(APIServer pid=1)   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+(APIServer pid=1)     return await anext(self.gen)
+(APIServer pid=1)            ^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=1)   File "/usr/local/lib/python3.12/dist-packages/vllm/entrypoints/openai/api_server.py", line 124, in build_async_engine_client_from_engine_args
+(APIServer pid=1)     vllm_config = engine_args.create_engine_config(usage_context=usage_context)
+(APIServer pid=1)                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=1)   File "/usr/local/lib/python3.12/dist-packages/vllm/engine/arg_utils.py", line 1655, in create_engine_config
+(APIServer pid=1)     model_config = self.create_model_config()
+(APIServer pid=1)                    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=1)   File "/usr/local/lib/python3.12/dist-packages/vllm/engine/arg_utils.py", line 1499, in create_model_config
+(APIServer pid=1)     return ModelConfig(
+(APIServer pid=1)            ^^^^^^^^^^^^
+(APIServer pid=1)   File "/usr/local/lib/python3.12/dist-packages/pydantic/_internal/_dataclasses.py", line 121, in __init__
+(APIServer pid=1)     s.__pydantic_validator__.validate_python(ArgsKwargs(args, kwargs), self_instance=s)
+(APIServer pid=1) pydantic_core._pydantic_core.ValidationError: 1 validation error for ModelConfig
+(APIServer pid=1)   Value error, User-specified max_model_len (2097152) is greater than the derived max_model_len (max_position_embeddings=1048576 or model_max_length=None in model's config.json). To allow overriding this maximum, set the env var VLLM_ALLOW_LONG_MAX_MODEL_LEN=1. VLLM_ALLOW_LONG_MAX_MODEL_LEN must be used with extreme caution. If the model uses relative position encoding (RoPE), positions exceeding derived_max_model_len lead to nan. If the model uses absolute position encoding, positions exceeding derived_max_model_len will cause a CUDA array out-of-bounds error. [type=value_error, input_value=ArgsKwargs((), {'model': ...nderer_num_workers': 1}), input_type=ArgsKwargs]
+(APIServer pid=1)     For further information visit https://errors.pydantic.dev/2.13/v/value_error
+
+--- container env (VLLM_*, NCCL_*, TILELANG_*, HF_*, TORCH_*) ---
+HF_HUB_OFFLINE=1
+NCCL_IB_DISABLE=0
+NCCL_IB_MERGE_NICS=0
+NCCL_IB_SUBNET_AWARE_ROUTING=1
+NCCL_NET_PLUGIN=none
+NCCL_SOCKET_IFNAME=enp1s0f0np0
+TILELANG_CLEANUP_TEMP_FILES=1
+TORCH_CUDA_ARCH_LIST=12.1a
+VLLM_BASE_DIR=/workspace/vllm
+VLLM_ENGINE_READY_TIMEOUT_S=3600
+VLLM_HOST_IP=192.168.101.1
+VLLM_RPC_TIMEOUT=600000
+VLLM_TRITON_MLA_SPARSE=1
+VLLM_TRITON_MLA_SPARSE_HEAD_BLOCK_SIZE=4
+
+--- build provenance from image ---
+build_date: 2026-05-26T15:51:17Z
+build_script_commit: 594631f7aed06f7f3f77a7a26fa7def1d3a3b5d1
+vllm_version: 0.1.dev16268+g76b70802d.d20260526.cu132
+vllm_commit: 76b70802df652be1ebcf82b60772a27714660124
+flashinfer_commit: 56d537a1
+gpu_arch: 12.1a
+base_image: nvidia/cuda:13.2.0-devel-ubuntu24.04
+build_args:
+  vllm_ref: 428e08e
+  transformers_5: false
+  exp_mxfp4: false
+  vllm_prs: ""
+  build_jobs: 16
+
+--- nvidia-smi ---
+Tue May 26 11:51:02 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 580.142                Driver Version: 580.142        CUDA Version: 13.0     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA GB10                    On  |   0000000F:01:00.0 Off |                  N/A |
+| N/A   41C    P8              4W /  N/A  | Not Supported          |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|    0   N/A  N/A            2707      G   /usr/lib/xorg/Xorg                       18MiB |
+|    0   N/A  N/A            2828      G   /usr/bin/gnome-shell                      6MiB |
++-----------------------------------------------------------------------------------------+
+
+--- dmesg tail (last 50 lines, may need sudo) ---
+================================================================
+
+(also dumping worker state for context — it may have died first and taken head with it)
+
+================================================================
+FAILURE DIAGNOSTICS — worker (pcozz@spark-6)
+================================================================
+--- last 300 lines of vllm_node logs ---
+
+==========
+== CUDA ==
+==========
+
+CUDA Version 13.2.0
+
+Container image Copyright (c) 2016-2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+
+This container image and its contents are governed by the NVIDIA Deep Learning Container License.
+By pulling and using the container, you accept the terms and conditions of this license:
+https://developer.nvidia.com/ngc/nvidia-deep-learning-container-license
+
+A copy of this license is made available in this container at /NGC-DL-CONTAINER-LICENSE for your convenience.
+
+INFO 05-26 18:50:31 [arg_utils.py:726] HF_HUB_OFFLINE is True, replace model_id [canada-quant/DeepSeek-V4-Flash-W4A16-FP8] to model_path [/root/.cache/huggingface/hub/models--canada-quant--DeepSeek-V4-Flash-W4A16-FP8/snapshots/087ae8abe03d7f8961e8adcb9d59206d3ce8377e]
+WARNING 05-26 18:50:31 [envs.py:1874] Unknown vLLM environment variable detected: VLLM_BASE_DIR
+INFO 05-26 18:50:37 [nixl_utils.py:20] Setting UCX_RCACHE_MAX_UNRELEASED to '1024' to avoid a rare memory leak in UCX when using NIXL.
+WARNING 05-26 18:50:37 [nixl_utils.py:34] NIXL is not available
+WARNING 05-26 18:50:37 [nixl_utils.py:44] NIXL agent config is not available
+INFO 05-26 18:50:37 [model.py:563] Resolved architecture: DeepseekV4ForCausalLM
+Traceback (most recent call last):
+  File "/usr/local/bin/vllm", line 10, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/vllm/entrypoints/cli/main.py", line 92, in main
+    args.dispatch_function(args)
+  File "/usr/local/lib/python3.12/dist-packages/vllm/entrypoints/cli/serve.py", line 116, in cmd
+    run_headless(args)
+  File "/usr/local/lib/python3.12/dist-packages/vllm/entrypoints/cli/serve.py", line 154, in run_headless
+    vllm_config = engine_args.create_engine_config(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/vllm/engine/arg_utils.py", line 1655, in create_engine_config
+    model_config = self.create_model_config()
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/vllm/engine/arg_utils.py", line 1499, in create_model_config
+    return ModelConfig(
+           ^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/pydantic/_internal/_dataclasses.py", line 121, in __init__
+    s.__pydantic_validator__.validate_python(ArgsKwargs(args, kwargs), self_instance=s)
+pydantic_core._pydantic_core.ValidationError: 1 validation error for ModelConfig
+  Value error, User-specified max_model_len (2097152) is greater than the derived max_model_len (max_position_embeddings=1048576 or model_max_length=None in model's config.json). To allow overriding this maximum, set the env var VLLM_ALLOW_LONG_MAX_MODEL_LEN=1. VLLM_ALLOW_LONG_MAX_MODEL_LEN must be used with extreme caution. If the model uses relative position encoding (RoPE), positions exceeding derived_max_model_len lead to nan. If the model uses absolute position encoding, positions exceeding derived_max_model_len will cause a CUDA array out-of-bounds error. [type=value_error, input_value=ArgsKwargs((), {'model': ...nderer_num_workers': 1}), input_type=ArgsKwargs]
+    For further information visit https://errors.pydantic.dev/2.13/v/value_error
+
+--- container env (VLLM_*, NCCL_*, TILELANG_*, HF_*, TORCH_*) ---
+HF_HUB_OFFLINE=1
+NCCL_IB_DISABLE=0
+NCCL_IB_MERGE_NICS=0
+NCCL_IB_SUBNET_AWARE_ROUTING=1
+NCCL_NET_PLUGIN=none
+NCCL_SOCKET_IFNAME=enp1s0f0np0
+TILELANG_CLEANUP_TEMP_FILES=1
+TORCH_CUDA_ARCH_LIST=12.1a
+VLLM_BASE_DIR=/workspace/vllm
+VLLM_ENGINE_READY_TIMEOUT_S=3600
+VLLM_HOST_IP=192.168.101.2
+VLLM_RPC_TIMEOUT=600000
+VLLM_TRITON_MLA_SPARSE=1
+VLLM_TRITON_MLA_SPARSE_HEAD_BLOCK_SIZE=4
+
+--- build provenance from image ---
+build_date: 2026-05-26T15:51:17Z
+build_script_commit: 594631f7aed06f7f3f77a7a26fa7def1d3a3b5d1
+vllm_version: 0.1.dev16268+g76b70802d.d20260526.cu132
+vllm_commit: 76b70802df652be1ebcf82b60772a27714660124
+flashinfer_commit: 56d537a1
+gpu_arch: 12.1a
+base_image: nvidia/cuda:13.2.0-devel-ubuntu24.04
+build_args:
+  vllm_ref: 428e08e
+  transformers_5: false
+  exp_mxfp4: false
+  vllm_prs: ""
+  build_jobs: 16
+
+--- nvidia-smi ---
+Tue May 26 11:51:04 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 580.142                Driver Version: 580.142        CUDA Version: 13.0     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA GB10                    On  |   0000000F:01:00.0 Off |                  N/A |
+| N/A   41C    P8              5W /  N/A  | Not Supported          |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|    0   N/A  N/A            2684      G   /usr/lib/xorg/Xorg                       18MiB |
+|    0   N/A  N/A            2806      G   /usr/bin/gnome-shell                      6MiB |
++-----------------------------------------------------------------------------------------+
+
+--- dmesg tail (last 50 lines, may need sudo) ---
+================================================================
+----- HEAD vllm_node logs (last 200) -----
+
+==========
+== CUDA ==
+==========
+
+CUDA Version 13.2.0
+
+Container image Copyright (c) 2016-2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+
+This container image and its contents are governed by the NVIDIA Deep Learning Container License.
+By pulling and using the container, you accept the terms and conditions of this license:
+https://developer.nvidia.com/ngc/nvidia-deep-learning-container-license
+
+A copy of this license is made available in this container at /NGC-DL-CONTAINER-LICENSE for your convenience.
+
+(APIServer pid=1) INFO 05-26 18:50:37 [utils.py:299] 
+(APIServer pid=1) INFO 05-26 18:50:37 [utils.py:299]        █     █     █▄   ▄█
+(APIServer pid=1) INFO 05-26 18:50:37 [utils.py:299]  ▄▄ ▄█ █     █     █ ▀▄▀ █  version 0.1.dev16268+g76b70802d.d20260526
+(APIServer pid=1) INFO 05-26 18:50:37 [utils.py:299]   █▄█▀ █     █     █     █  model   canada-quant/DeepSeek-V4-Flash-W4A16-FP8
+(APIServer pid=1) INFO 05-26 18:50:37 [utils.py:299]    ▀▀  ▀▀▀▀▀ ▀▀▀▀▀ ▀     ▀
+(APIServer pid=1) INFO 05-26 18:50:37 [utils.py:299] 
+(APIServer pid=1) INFO 05-26 18:50:37 [utils.py:233] non-default args: {'model_tag': 'canada-quant/DeepSeek-V4-Flash-W4A16-FP8', 'enable_auto_tool_choice': True, 'tool_call_parser': 'deepseek_v4', 'host': '0.0.0.0', 'port': 8888, 'model': 'canada-quant/DeepSeek-V4-Flash-W4A16-FP8', 'tokenizer_mode': 'deepseek_v4', 'trust_remote_code': True, 'max_model_len': 2097152, 'served_model_name': ['DSV4-W4A16-FP8', 'deepseek-ai/DeepSeek-V4-Flash', 'deepseek-v4-flash'], 'reasoning_parser': 'deepseek_v4', 'master_addr': '192.168.101.1', 'nnodes': 2, 'tensor_parallel_size': 2, 'block_size': 256, 'gpu_memory_utilization': 0.9, 'kv_cache_dtype': 'fp8', 'max_num_batched_tokens': 8192, 'max_num_seqs': 1, 'compilation_config': {'mode': None, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['all'], 'ir_enable_torch_wrap': None, 'splitting_ops': None, 'compile_mm_encoder': False, 'cudagraph_mm_encoder': False, 'encoder_cudagraph_token_budgets': [], 'encoder_cudagraph_max_vision_items_per_batch': 0, 'encoder_cudagraph_max_frames_per_batch': None, 'compile_sizes': None, 'compile_ranges_endpoints': None, 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'size_asserts': False, 'alignment_asserts': False, 'scalar_asserts': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_AND_PIECEWISE: (2, 1)>, 'cudagraph_num_of_warmups': 0, 'cudagraph_capture_sizes': None, 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': None, 'pass_config': {}, 'max_cudagraph_capture_size': None, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': None, 'static_all_moe_layers': []}}
+(APIServer pid=1) INFO 05-26 18:50:37 [arg_utils.py:726] HF_HUB_OFFLINE is True, replace model_id [canada-quant/DeepSeek-V4-Flash-W4A16-FP8] to model_path [/root/.cache/huggingface/hub/models--canada-quant--DeepSeek-V4-Flash-W4A16-FP8/snapshots/087ae8abe03d7f8961e8adcb9d59206d3ce8377e]
+(APIServer pid=1) WARNING 05-26 18:50:37 [envs.py:1874] Unknown vLLM environment variable detected: VLLM_BASE_DIR
+(APIServer pid=1) INFO 05-26 18:50:42 [nixl_utils.py:20] Setting UCX_RCACHE_MAX_UNRELEASED to '1024' to avoid a rare memory leak in UCX when using NIXL.
+(APIServer pid=1) WARNING 05-26 18:50:42 [nixl_utils.py:34] NIXL is not available
+(APIServer pid=1) WARNING 05-26 18:50:42 [nixl_utils.py:44] NIXL agent config is not available
+(APIServer pid=1) INFO 05-26 18:50:42 [model.py:563] Resolved architecture: DeepseekV4ForCausalLM
+(APIServer pid=1) Traceback (most recent call last):
+(APIServer pid=1)   File "/usr/local/bin/vllm", line 10, in <module>
+(APIServer pid=1)     sys.exit(main())
+(APIServer pid=1)              ^^^^^^
+(APIServer pid=1)   File "/usr/local/lib/python3.12/dist-packages/vllm/entrypoints/cli/main.py", line 92, in main
+(APIServer pid=1)     args.dispatch_function(args)
+(APIServer pid=1)   File "/usr/local/lib/python3.12/dist-packages/vllm/entrypoints/cli/serve.py", line 122, in cmd
+(APIServer pid=1)     uvloop.run(run_server(args))
+(APIServer pid=1)   File "/usr/local/lib/python3.12/dist-packages/uvloop/__init__.py", line 96, in run
+(APIServer pid=1)     return __asyncio.run(
+(APIServer pid=1)            ^^^^^^^^^^^^^^
+(APIServer pid=1)   File "/usr/lib/python3.12/asyncio/runners.py", line 194, in run
+(APIServer pid=1)     return runner.run(main)
+(APIServer pid=1)            ^^^^^^^^^^^^^^^^
+(APIServer pid=1)   File "/usr/lib/python3.12/asyncio/runners.py", line 118, in run
+(APIServer pid=1)     return self._loop.run_until_complete(task)
+(APIServer pid=1)            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=1)   File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+(APIServer pid=1)   File "/usr/local/lib/python3.12/dist-packages/uvloop/__init__.py", line 48, in wrapper
+(APIServer pid=1)     return await main
+(APIServer pid=1)            ^^^^^^^^^^
+(APIServer pid=1)   File "/usr/local/lib/python3.12/dist-packages/vllm/entrypoints/openai/api_server.py", line 678, in run_server
+(APIServer pid=1)     await run_server_worker(listen_address, sock, args, **uvicorn_kwargs)
+(APIServer pid=1)   File "/usr/local/lib/python3.12/dist-packages/vllm/entrypoints/openai/api_server.py", line 692, in run_server_worker
+(APIServer pid=1)     async with build_async_engine_client(
+(APIServer pid=1)   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+(APIServer pid=1)     return await anext(self.gen)
+(APIServer pid=1)            ^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=1)   File "/usr/local/lib/python3.12/dist-packages/vllm/entrypoints/openai/api_server.py", line 100, in build_async_engine_client
+(APIServer pid=1)     async with build_async_engine_client_from_engine_args(
+(APIServer pid=1)   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+(APIServer pid=1)     return await anext(self.gen)
+(APIServer pid=1)            ^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=1)   File "/usr/local/lib/python3.12/dist-packages/vllm/entrypoints/openai/api_server.py", line 124, in build_async_engine_client_from_engine_args
+(APIServer pid=1)     vllm_config = engine_args.create_engine_config(usage_context=usage_context)
+(APIServer pid=1)                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=1)   File "/usr/local/lib/python3.12/dist-packages/vllm/engine/arg_utils.py", line 1655, in create_engine_config
+(APIServer pid=1)     model_config = self.create_model_config()
+(APIServer pid=1)                    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=1)   File "/usr/local/lib/python3.12/dist-packages/vllm/engine/arg_utils.py", line 1499, in create_model_config
+(APIServer pid=1)     return ModelConfig(
+(APIServer pid=1)            ^^^^^^^^^^^^
+(APIServer pid=1)   File "/usr/local/lib/python3.12/dist-packages/pydantic/_internal/_dataclasses.py", line 121, in __init__
+(APIServer pid=1)     s.__pydantic_validator__.validate_python(ArgsKwargs(args, kwargs), self_instance=s)
+(APIServer pid=1) pydantic_core._pydantic_core.ValidationError: 1 validation error for ModelConfig
+(APIServer pid=1)   Value error, User-specified max_model_len (2097152) is greater than the derived max_model_len (max_position_embeddings=1048576 or model_max_length=None in model's config.json). To allow overriding this maximum, set the env var VLLM_ALLOW_LONG_MAX_MODEL_LEN=1. VLLM_ALLOW_LONG_MAX_MODEL_LEN must be used with extreme caution. If the model uses relative position encoding (RoPE), positions exceeding derived_max_model_len lead to nan. If the model uses absolute position encoding, positions exceeding derived_max_model_len will cause a CUDA array out-of-bounds error. [type=value_error, input_value=ArgsKwargs((), {'model': ...nderer_num_workers': 1}), input_type=ArgsKwargs]
+(APIServer pid=1)     For further information visit https://errors.pydantic.dev/2.13/v/value_error
+----- WORKER vllm_node logs (last 200) -----
+
+==========
+== CUDA ==
+==========
+
+CUDA Version 13.2.0
+
+Container image Copyright (c) 2016-2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+
+This container image and its contents are governed by the NVIDIA Deep Learning Container License.
+By pulling and using the container, you accept the terms and conditions of this license:
+https://developer.nvidia.com/ngc/nvidia-deep-learning-container-license
+
+A copy of this license is made available in this container at /NGC-DL-CONTAINER-LICENSE for your convenience.
+
+INFO 05-26 18:50:31 [arg_utils.py:726] HF_HUB_OFFLINE is True, replace model_id [canada-quant/DeepSeek-V4-Flash-W4A16-FP8] to model_path [/root/.cache/huggingface/hub/models--canada-quant--DeepSeek-V4-Flash-W4A16-FP8/snapshots/087ae8abe03d7f8961e8adcb9d59206d3ce8377e]
+WARNING 05-26 18:50:31 [envs.py:1874] Unknown vLLM environment variable detected: VLLM_BASE_DIR
+INFO 05-26 18:50:37 [nixl_utils.py:20] Setting UCX_RCACHE_MAX_UNRELEASED to '1024' to avoid a rare memory leak in UCX when using NIXL.
+WARNING 05-26 18:50:37 [nixl_utils.py:34] NIXL is not available
+WARNING 05-26 18:50:37 [nixl_utils.py:44] NIXL agent config is not available
+INFO 05-26 18:50:37 [model.py:563] Resolved architecture: DeepseekV4ForCausalLM
+Traceback (most recent call last):
+  File "/usr/local/bin/vllm", line 10, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/vllm/entrypoints/cli/main.py", line 92, in main
+    args.dispatch_function(args)
+  File "/usr/local/lib/python3.12/dist-packages/vllm/entrypoints/cli/serve.py", line 116, in cmd
+    run_headless(args)
+  File "/usr/local/lib/python3.12/dist-packages/vllm/entrypoints/cli/serve.py", line 154, in run_headless
+    vllm_config = engine_args.create_engine_config(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/vllm/engine/arg_utils.py", line 1655, in create_engine_config
+    model_config = self.create_model_config()
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/vllm/engine/arg_utils.py", line 1499, in create_model_config
+    return ModelConfig(
+           ^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/pydantic/_internal/_dataclasses.py", line 121, in __init__
+    s.__pydantic_validator__.validate_python(ArgsKwargs(args, kwargs), self_instance=s)
+pydantic_core._pydantic_core.ValidationError: 1 validation error for ModelConfig
+  Value error, User-specified max_model_len (2097152) is greater than the derived max_model_len (max_position_embeddings=1048576 or model_max_length=None in model's config.json). To allow overriding this maximum, set the env var VLLM_ALLOW_LONG_MAX_MODEL_LEN=1. VLLM_ALLOW_LONG_MAX_MODEL_LEN must be used with extreme caution. If the model uses relative position encoding (RoPE), positions exceeding derived_max_model_len lead to nan. If the model uses absolute position encoding, positions exceeding derived_max_model_len will cause a CUDA array out-of-bounds error. [type=value_error, input_value=ArgsKwargs((), {'model': ...nderer_num_workers': 1}), input_type=ArgsKwargs]
+    For further information visit https://errors.pydantic.dev/2.13/v/value_error

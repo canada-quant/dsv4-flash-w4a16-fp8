@@ -1,0 +1,265 @@
+{
+  "config": {
+    "base": "http://100.87.54.16:8888",
+    "model": "DSV4-W4A16-FP8",
+    "limit": 50
+  },
+  "summary": {
+    "n": 50,
+    "correct": 0,
+    "accuracy": 0.0,
+    "errors": 50
+  },
+  "results": [
+    {
+      "i": 0,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "18"
+    },
+    {
+      "i": 1,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "3"
+    },
+    {
+      "i": 2,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "70000"
+    },
+    {
+      "i": 3,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "540"
+    },
+    {
+      "i": 4,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "20"
+    },
+    {
+      "i": 5,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "64"
+    },
+    {
+      "i": 6,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "260"
+    },
+    {
+      "i": 7,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "160"
+    },
+    {
+      "i": 8,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "45"
+    },
+    {
+      "i": 9,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "460"
+    },
+    {
+      "i": 10,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "366"
+    },
+    {
+      "i": 11,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "694"
+    },
+    {
+      "i": 12,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "13"
+    },
+    {
+      "i": 13,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "18"
+    },
+    {
+      "i": 14,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "60"
+    },
+    {
+      "i": 15,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "125"
+    },
+    {
+      "i": 16,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "230"
+    },
+    {
+      "i": 17,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "57500"
+    },
+    {
+      "i": 18,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "7"
+    },
+    {
+      "i": 19,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "6"
+    },
+    {
+      "i": 20,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "15"
+    },
+    {
+      "i": 21,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "14"
+    },
+    {
+      "i": 22,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "7"
+    },
+    {
+      "i": 23,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "8"
+    },
+    {
+      "i": 24,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "26"
+    },
+    {
+      "i": 25,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "2"
+    },
+    {
+      "i": 26,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "243"
+    },
+    {
+      "i": 27,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "16"
+    },
+    {
+      "i": 28,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "25"
+    },
+    {
+      "i": 29,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "104"
+    },
+    {
+      "i": 30,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "109"
+    },
+    {
+      "i": 31,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "80"
+    },
+    {
+      "i": 32,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "35"
+    },
+    {
+      "i": 33,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "70"
+    },
+    {
+      "i": 34,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "23"
+    },
+    {
+      "i": 35,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "9"
+    },
+    {
+      "i": 36,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "75"
+    },
+    {
+      "i": 37,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "2"
+    },
+    {
+      "i": 38,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "10"
+    },
+    {
+      "i": 39,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "18"
+    },
+    {
+      "i": 40,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "8"
+    },
+    {
+      "i": 41,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "200"
+    },
+    {
+      "i": 42,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "26"
+    },
+    {
+      "i": 43,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "48"
+    },
+    {
+      "i": 44,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "20"
+    },
+    {
+      "i": 45,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "104"
+    },
+    {
+      "i": 46,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "163"
+    },
+    {
+      "i": 47,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "800"
+    },
+    {
+      "i": 48,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "8"
+    },
+    {
+      "i": 49,
+      "error": "HTTP Error 404: Not Found",
+      "gold": "30"
+    }
+  ]
+}

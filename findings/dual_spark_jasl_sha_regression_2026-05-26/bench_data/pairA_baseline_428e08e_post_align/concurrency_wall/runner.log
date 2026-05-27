@@ -1,0 +1,681 @@
+=== concurrency wall — varying seqs at fixed ctx
+=== cell mml=16384 mns=2 at 2026-05-26T23:39:15Z ===
+[bench] base=http://100.66.113.93:8888 model=DSV4-W4A16-FP8 c=2 n=8 prompt=512 decode=256
+[bench] 1 warmup requests...
+[bench] running 8 measured requests at c=2...
+  +  256 tok in 17.38s = 14.7 tok/s, TPOT 67.9ms
+  +  256 tok in 17.38s = 14.7 tok/s, TPOT 67.9ms
+  +  256 tok in 16.55s = 15.5 tok/s, TPOT 64.7ms
+  +  256 tok in 16.55s = 15.5 tok/s, TPOT 64.7ms
+  +  256 tok in 17.97s = 14.2 tok/s, TPOT 70.2ms
+  +  256 tok in 17.97s = 14.2 tok/s, TPOT 70.2ms
+  +  256 tok in 16.95s = 15.1 tok/s, TPOT 66.2ms
+  +  256 tok in 16.95s = 15.1 tok/s, TPOT 66.2ms
+
+[bench] wrote results/pairA_baseline_428e08e_post_align/concurrency_wall/ctx16384_seq2_bench.json
+[bench] aggregate 29.7 tok/s | per-req median 14.9 tok/s | TPOT median 67.0ms
+ctx16384_seq2 READY boot=396s agg=29.7 median=14.9 TPOT=67.0
+=== cell mml=16384 mns=4 at 2026-05-26T23:47:22Z ===
+[bench] base=http://100.66.113.93:8888 model=DSV4-W4A16-FP8 c=4 n=16 prompt=512 decode=256
+[bench] 1 warmup requests...
+[bench] running 16 measured requests at c=4...
+  +  256 tok in 21.73s = 11.8 tok/s, TPOT 84.9ms
+  +  256 tok in 21.73s = 11.8 tok/s, TPOT 84.9ms
+  +  256 tok in 21.80s = 11.7 tok/s, TPOT 85.2ms
+  +  256 tok in 21.85s = 11.7 tok/s, TPOT 85.3ms
+  +  256 tok in 20.44s = 12.5 tok/s, TPOT 79.9ms
+  +  256 tok in 20.44s = 12.5 tok/s, TPOT 79.9ms
+  +  256 tok in 20.44s = 12.5 tok/s, TPOT 79.8ms
+  +  256 tok in 20.44s = 12.5 tok/s, TPOT 79.9ms
+  +  256 tok in 21.06s = 12.2 tok/s, TPOT 82.2ms
+  +  256 tok in 21.06s = 12.2 tok/s, TPOT 82.2ms
+  +  256 tok in 21.06s = 12.2 tok/s, TPOT 82.3ms
+  +  256 tok in 21.07s = 12.1 tok/s, TPOT 82.3ms
+  +  256 tok in 22.17s = 11.5 tok/s, TPOT 86.6ms
+  +  256 tok in 22.17s = 11.5 tok/s, TPOT 86.6ms
+  +  256 tok in 22.15s = 11.6 tok/s, TPOT 86.5ms
+  +  256 tok in 22.15s = 11.6 tok/s, TPOT 86.5ms
+
+[bench] wrote results/pairA_baseline_428e08e_post_align/concurrency_wall/ctx16384_seq4_bench.json
+[bench] aggregate 47.9 tok/s | per-req median 12.0 tok/s | TPOT median 83.6ms
+ctx16384_seq4 READY boot=397s agg=47.9 median=12.0 TPOT=83.6
+=== cell mml=16384 mns=8 at 2026-05-26T23:55:45Z ===
+ctx16384_seq8 BOOT_FAIL_rc3 boot=11s
+=== cell mml=16384 mns=16 at 2026-05-26T23:55:56Z ===
+[bench] base=http://100.66.113.93:8888 model=DSV4-W4A16-FP8 c=16 n=64 prompt=512 decode=256
+[bench] 1 warmup requests...
+[bench] running 64 measured requests at c=16...
+  +  256 tok in 36.61s = 7.0 tok/s, TPOT 143.0ms
+  +  256 tok in 36.61s = 7.0 tok/s, TPOT 143.0ms
+  +  256 tok in 36.61s = 7.0 tok/s, TPOT 143.0ms
+  +  256 tok in 36.84s = 6.9 tok/s, TPOT 143.9ms
+  +  256 tok in 36.85s = 6.9 tok/s, TPOT 143.9ms
+  +  256 tok in 36.85s = 6.9 tok/s, TPOT 143.9ms
+  +  256 tok in 36.85s = 6.9 tok/s, TPOT 143.9ms
+  +  256 tok in 36.85s = 6.9 tok/s, TPOT 143.9ms
+  +  256 tok in 36.85s = 6.9 tok/s, TPOT 143.9ms
+  +  256 tok in 36.85s = 6.9 tok/s, TPOT 143.9ms
+  +  256 tok in 36.85s = 6.9 tok/s, TPOT 143.9ms
+  +  256 tok in 36.85s = 6.9 tok/s, TPOT 143.9ms
+  +  256 tok in 36.85s = 6.9 tok/s, TPOT 143.9ms
+  +  256 tok in 36.85s = 6.9 tok/s, TPOT 143.9ms
+  +  256 tok in 36.85s = 6.9 tok/s, TPOT 143.9ms
+  +  256 tok in 36.85s = 6.9 tok/s, TPOT 143.9ms
+  +  256 tok in 30.00s = 8.5 tok/s, TPOT 117.2ms
+  +  256 tok in 30.00s = 8.5 tok/s, TPOT 117.2ms
+  +  256 tok in 30.00s = 8.5 tok/s, TPOT 117.2ms
+  +  256 tok in 30.00s = 8.5 tok/s, TPOT 117.2ms
+  +  256 tok in 30.00s = 8.5 tok/s, TPOT 117.2ms
+  +  256 tok in 30.00s = 8.5 tok/s, TPOT 117.2ms
+  +  256 tok in 30.00s = 8.5 tok/s, TPOT 117.2ms
+  +  256 tok in 30.00s = 8.5 tok/s, TPOT 117.2ms
+  +  256 tok in 30.00s = 8.5 tok/s, TPOT 117.2ms
+  +  256 tok in 30.00s = 8.5 tok/s, TPOT 117.2ms
+  +  256 tok in 30.00s = 8.5 tok/s, TPOT 117.2ms
+  +  256 tok in 30.00s = 8.5 tok/s, TPOT 117.2ms
+  +  256 tok in 30.00s = 8.5 tok/s, TPOT 117.2ms
+  +  256 tok in 30.00s = 8.5 tok/s, TPOT 117.2ms
+  +  256 tok in 30.00s = 8.5 tok/s, TPOT 117.2ms
+  +  256 tok in 30.00s = 8.5 tok/s, TPOT 117.2ms
+  +  256 tok in 31.91s = 8.0 tok/s, TPOT 124.6ms
+  +  256 tok in 31.91s = 8.0 tok/s, TPOT 124.6ms
+  +  256 tok in 31.91s = 8.0 tok/s, TPOT 124.6ms
+  +  256 tok in 31.91s = 8.0 tok/s, TPOT 124.6ms
+  +  256 tok in 31.91s = 8.0 tok/s, TPOT 124.7ms
+  +  256 tok in 31.91s = 8.0 tok/s, TPOT 124.7ms
+  +  256 tok in 31.91s = 8.0 tok/s, TPOT 124.6ms
+  +  256 tok in 31.91s = 8.0 tok/s, TPOT 124.7ms
+  +  256 tok in 31.91s = 8.0 tok/s, TPOT 124.7ms
+  +  256 tok in 31.91s = 8.0 tok/s, TPOT 124.7ms
+  +  256 tok in 31.91s = 8.0 tok/s, TPOT 124.7ms
+  +  256 tok in 31.91s = 8.0 tok/s, TPOT 124.7ms
+  +  256 tok in 31.91s = 8.0 tok/s, TPOT 124.7ms
+  +  256 tok in 31.91s = 8.0 tok/s, TPOT 124.7ms
+  +  256 tok in 31.91s = 8.0 tok/s, TPOT 124.7ms
+  +  256 tok in 31.91s = 8.0 tok/s, TPOT 124.7ms
+  +  256 tok in 31.03s = 8.2 tok/s, TPOT 121.2ms
+  +  256 tok in 31.03s = 8.2 tok/s, TPOT 121.2ms
+  +  256 tok in 31.03s = 8.2 tok/s, TPOT 121.2ms
+  +  256 tok in 31.03s = 8.3 tok/s, TPOT 121.2ms
+  +  256 tok in 31.03s = 8.3 tok/s, TPOT 121.2ms
+  +  256 tok in 31.03s = 8.3 tok/s, TPOT 121.2ms
+  +  256 tok in 31.03s = 8.3 tok/s, TPOT 121.2ms
+  +  256 tok in 31.03s = 8.3 tok/s, TPOT 121.2ms
+  +  256 tok in 31.03s = 8.3 tok/s, TPOT 121.2ms
+  +  256 tok in 31.03s = 8.3 tok/s, TPOT 121.2ms
+  +  256 tok in 31.03s = 8.3 tok/s, TPOT 121.2ms
+  +  256 tok in 31.03s = 8.3 tok/s, TPOT 121.2ms
+  +  256 tok in 31.03s = 8.3 tok/s, TPOT 121.2ms
+  +  256 tok in 31.03s = 8.3 tok/s, TPOT 121.2ms
+  +  256 tok in 31.03s = 8.3 tok/s, TPOT 121.2ms
+  +  256 tok in 31.03s = 8.3 tok/s, TPOT 121.2ms
+
+[bench] wrote results/pairA_baseline_428e08e_post_align/concurrency_wall/ctx16384_seq16_bench.json
+[bench] aggregate 126.2 tok/s | per-req median 8.1 tok/s | TPOT median 122.9ms
+ctx16384_seq16 READY boot=401s agg=126.2 median=8.1 TPOT=122.9
+=== cell mml=65536 mns=2 at 2026-05-27T00:05:11Z ===
+[bench] base=http://100.66.113.93:8888 model=DSV4-W4A16-FP8 c=2 n=8 prompt=512 decode=256
+[bench] 1 warmup requests...
+[bench] running 8 measured requests at c=2...
+  +  256 tok in 16.26s = 15.7 tok/s, TPOT 63.5ms
+  +  256 tok in 16.26s = 15.7 tok/s, TPOT 63.5ms
+  +  256 tok in 16.40s = 15.6 tok/s, TPOT 64.1ms
+  +  256 tok in 16.40s = 15.6 tok/s, TPOT 64.1ms
+  +  256 tok in 17.58s = 14.6 tok/s, TPOT 68.7ms
+  +  256 tok in 17.58s = 14.6 tok/s, TPOT 68.7ms
+  +  256 tok in 17.32s = 14.8 tok/s, TPOT 67.7ms
+  +  256 tok in 17.32s = 14.8 tok/s, TPOT 67.7ms
+
+[bench] wrote results/pairA_baseline_428e08e_post_align/concurrency_wall/ctx65536_seq2_bench.json
+[bench] aggregate 30.3 tok/s | per-req median 15.2 tok/s | TPOT median 65.9ms
+ctx65536_seq2 READY boot=429s agg=30.3 median=15.2 TPOT=65.9
+=== cell mml=65536 mns=4 at 2026-05-27T00:13:51Z ===
+[bench] base=http://100.66.113.93:8888 model=DSV4-W4A16-FP8 c=4 n=16 prompt=512 decode=256
+[bench] 1 warmup requests...
+[bench] running 16 measured requests at c=4...
+  +  256 tok in 22.14s = 11.6 tok/s, TPOT 86.5ms
+  +  256 tok in 22.22s = 11.5 tok/s, TPOT 86.8ms
+  +  256 tok in 22.22s = 11.5 tok/s, TPOT 86.8ms
+  +  256 tok in 22.22s = 11.5 tok/s, TPOT 86.8ms
+  +  256 tok in 21.56s = 11.9 tok/s, TPOT 84.2ms
+  +  256 tok in 21.64s = 11.8 tok/s, TPOT 84.5ms
+  +  256 tok in 21.64s = 11.8 tok/s, TPOT 84.5ms
+  +  256 tok in 21.64s = 11.8 tok/s, TPOT 84.5ms
+  +  256 tok in 21.52s = 11.9 tok/s, TPOT 84.0ms
+  +  256 tok in 21.52s = 11.9 tok/s, TPOT 84.1ms
+  +  256 tok in 21.52s = 11.9 tok/s, TPOT 84.1ms
+  +  256 tok in 21.52s = 11.9 tok/s, TPOT 84.1ms
+  +  256 tok in 20.65s = 12.4 tok/s, TPOT 80.7ms
+  +  256 tok in 20.64s = 12.4 tok/s, TPOT 80.6ms
+  +  256 tok in 20.64s = 12.4 tok/s, TPOT 80.6ms
+  +  256 tok in 20.64s = 12.4 tok/s, TPOT 80.6ms
+
+[bench] wrote results/pairA_baseline_428e08e_post_align/concurrency_wall/ctx65536_seq4_bench.json
+[bench] aggregate 47.6 tok/s | per-req median 11.9 tok/s | TPOT median 84.1ms
+ctx65536_seq4 READY boot=398s agg=47.6 median=11.9 TPOT=84.1
+=== cell mml=65536 mns=8 at 2026-05-27T00:22:16Z ===
+[bench] base=http://100.66.113.93:8888 model=DSV4-W4A16-FP8 c=8 n=32 prompt=512 decode=256
+[bench] 1 warmup requests...
+[bench] running 32 measured requests at c=8...
+  +  256 tok in 29.33s = 8.7 tok/s, TPOT 114.6ms
+  +  256 tok in 29.33s = 8.7 tok/s, TPOT 114.6ms
+  +  256 tok in 29.69s = 8.6 tok/s, TPOT 116.0ms
+  +  256 tok in 29.69s = 8.6 tok/s, TPOT 116.0ms
+  +  256 tok in 29.69s = 8.6 tok/s, TPOT 116.0ms
+  +  256 tok in 29.69s = 8.6 tok/s, TPOT 116.0ms
+  +  256 tok in 29.69s = 8.6 tok/s, TPOT 116.0ms
+  +  256 tok in 29.69s = 8.6 tok/s, TPOT 116.0ms
+  +  256 tok in 27.87s = 9.2 tok/s, TPOT 108.9ms
+  +  256 tok in 27.87s = 9.2 tok/s, TPOT 108.9ms
+  +  256 tok in 27.74s = 9.2 tok/s, TPOT 108.4ms
+  +  256 tok in 27.74s = 9.2 tok/s, TPOT 108.4ms
+  +  256 tok in 27.74s = 9.2 tok/s, TPOT 108.4ms
+  +  256 tok in 27.74s = 9.2 tok/s, TPOT 108.4ms
+  +  256 tok in 27.74s = 9.2 tok/s, TPOT 108.4ms
+  +  256 tok in 27.74s = 9.2 tok/s, TPOT 108.4ms
+  +  256 tok in 27.18s = 9.4 tok/s, TPOT 106.2ms
+  +  256 tok in 27.18s = 9.4 tok/s, TPOT 106.2ms
+  +  256 tok in 27.17s = 9.4 tok/s, TPOT 106.1ms
+  +  256 tok in 27.17s = 9.4 tok/s, TPOT 106.2ms
+  +  256 tok in 27.17s = 9.4 tok/s, TPOT 106.2ms
+  +  256 tok in 27.17s = 9.4 tok/s, TPOT 106.2ms
+  +  256 tok in 27.17s = 9.4 tok/s, TPOT 106.1ms
+  +  256 tok in 27.17s = 9.4 tok/s, TPOT 106.2ms
+  +  256 tok in 27.41s = 9.3 tok/s, TPOT 107.1ms
+  +  256 tok in 27.41s = 9.3 tok/s, TPOT 107.1ms
+  +  256 tok in 27.42s = 9.3 tok/s, TPOT 107.1ms
+  +  256 tok in 27.42s = 9.3 tok/s, TPOT 107.1ms
+  +  256 tok in 27.42s = 9.3 tok/s, TPOT 107.1ms
+  +  256 tok in 27.42s = 9.3 tok/s, TPOT 107.1ms
+  +  256 tok in 27.42s = 9.3 tok/s, TPOT 107.1ms
+  +  256 tok in 27.42s = 9.3 tok/s, TPOT 107.1ms
+
+[bench] wrote results/pairA_baseline_428e08e_post_align/concurrency_wall/ctx65536_seq8_bench.json
+[bench] aggregate 73.1 tok/s | per-req median 9.3 tok/s | TPOT median 107.7ms
+ctx65536_seq8 READY boot=397s agg=73.1 median=9.3 TPOT=107.7
+=== cell mml=65536 mns=16 at 2026-05-27T00:31:11Z ===
+[bench] base=http://100.66.113.93:8888 model=DSV4-W4A16-FP8 c=16 n=64 prompt=512 decode=256
+[bench] 1 warmup requests...
+[bench] running 64 measured requests at c=16...
+  +  256 tok in 37.65s = 6.8 tok/s, TPOT 147.1ms
+  +  256 tok in 37.65s = 6.8 tok/s, TPOT 147.1ms
+  +  256 tok in 37.89s = 6.8 tok/s, TPOT 148.0ms
+  +  256 tok in 37.89s = 6.8 tok/s, TPOT 148.0ms
+  +  256 tok in 37.89s = 6.8 tok/s, TPOT 148.0ms
+  +  256 tok in 37.89s = 6.8 tok/s, TPOT 148.0ms
+  +  256 tok in 37.89s = 6.8 tok/s, TPOT 148.0ms
+  +  256 tok in 37.89s = 6.8 tok/s, TPOT 148.0ms
+  +  256 tok in 37.89s = 6.8 tok/s, TPOT 148.0ms
+  +  256 tok in 37.89s = 6.8 tok/s, TPOT 148.0ms
+  +  256 tok in 37.89s = 6.8 tok/s, TPOT 148.0ms
+  +  256 tok in 37.89s = 6.8 tok/s, TPOT 148.0ms
+  +  256 tok in 37.89s = 6.8 tok/s, TPOT 148.0ms
+  +  256 tok in 37.89s = 6.8 tok/s, TPOT 148.0ms
+  +  256 tok in 37.89s = 6.8 tok/s, TPOT 148.0ms
+  +  256 tok in 37.89s = 6.8 tok/s, TPOT 148.0ms
+  +  256 tok in 31.39s = 8.2 tok/s, TPOT 122.6ms
+  +  256 tok in 31.39s = 8.2 tok/s, TPOT 122.6ms
+  +  256 tok in 31.39s = 8.2 tok/s, TPOT 122.6ms
+  +  256 tok in 31.39s = 8.2 tok/s, TPOT 122.6ms
+  +  256 tok in 31.39s = 8.2 tok/s, TPOT 122.6ms
+  +  256 tok in 31.39s = 8.2 tok/s, TPOT 122.6ms
+  +  256 tok in 31.39s = 8.2 tok/s, TPOT 122.6ms
+  +  256 tok in 31.39s = 8.2 tok/s, TPOT 122.6ms
+  +  256 tok in 31.39s = 8.2 tok/s, TPOT 122.6ms
+  +  256 tok in 31.39s = 8.2 tok/s, TPOT 122.6ms
+  +  256 tok in 31.39s = 8.2 tok/s, TPOT 122.6ms
+  +  256 tok in 31.39s = 8.2 tok/s, TPOT 122.6ms
+  +  256 tok in 31.39s = 8.2 tok/s, TPOT 122.6ms
+  +  256 tok in 31.39s = 8.2 tok/s, TPOT 122.6ms
+  +  256 tok in 31.39s = 8.2 tok/s, TPOT 122.6ms
+  +  256 tok in 31.39s = 8.2 tok/s, TPOT 122.6ms
+  +  256 tok in 30.90s = 8.3 tok/s, TPOT 120.7ms
+  +  256 tok in 30.90s = 8.3 tok/s, TPOT 120.7ms
+  +  256 tok in 30.90s = 8.3 tok/s, TPOT 120.7ms
+  +  256 tok in 30.90s = 8.3 tok/s, TPOT 120.7ms
+  +  256 tok in 30.90s = 8.3 tok/s, TPOT 120.7ms
+  +  256 tok in 30.90s = 8.3 tok/s, TPOT 120.7ms
+  +  256 tok in 30.90s = 8.3 tok/s, TPOT 120.7ms
+  +  256 tok in 30.90s = 8.3 tok/s, TPOT 120.7ms
+  +  256 tok in 30.90s = 8.3 tok/s, TPOT 120.7ms
+  +  256 tok in 30.90s = 8.3 tok/s, TPOT 120.7ms
+  +  256 tok in 30.90s = 8.3 tok/s, TPOT 120.7ms
+  +  256 tok in 30.90s = 8.3 tok/s, TPOT 120.7ms
+  +  256 tok in 30.90s = 8.3 tok/s, TPOT 120.7ms
+  +  256 tok in 30.91s = 8.3 tok/s, TPOT 120.7ms
+  +  256 tok in 30.90s = 8.3 tok/s, TPOT 120.7ms
+  +  256 tok in 30.90s = 8.3 tok/s, TPOT 120.7ms
+  +  256 tok in 31.89s = 8.0 tok/s, TPOT 124.6ms
+  +  256 tok in 31.89s = 8.0 tok/s, TPOT 124.6ms
+  +  256 tok in 31.90s = 8.0 tok/s, TPOT 124.6ms
+  +  256 tok in 31.90s = 8.0 tok/s, TPOT 124.6ms
+  +  256 tok in 31.90s = 8.0 tok/s, TPOT 124.6ms
+  +  256 tok in 31.90s = 8.0 tok/s, TPOT 124.6ms
+  +  256 tok in 31.90s = 8.0 tok/s, TPOT 124.6ms
+  +  256 tok in 31.90s = 8.0 tok/s, TPOT 124.6ms
+  +  256 tok in 31.90s = 8.0 tok/s, TPOT 124.6ms
+  +  256 tok in 31.90s = 8.0 tok/s, TPOT 124.6ms
+  +  256 tok in 31.90s = 8.0 tok/s, TPOT 124.6ms
+  +  256 tok in 31.90s = 8.0 tok/s, TPOT 124.6ms
+  +  256 tok in 31.90s = 8.0 tok/s, TPOT 124.6ms
+  +  256 tok in 31.90s = 8.0 tok/s, TPOT 124.6ms
+  +  256 tok in 31.90s = 8.0 tok/s, TPOT 124.6ms
+  +  256 tok in 31.90s = 8.0 tok/s, TPOT 124.6ms
+
+[bench] wrote results/pairA_baseline_428e08e_post_align/concurrency_wall/ctx65536_seq16_bench.json
+[bench] aggregate 124.0 tok/s | per-req median 8.1 tok/s | TPOT median 123.6ms
+ctx65536_seq16 READY boot=428s agg=124.0 median=8.1 TPOT=123.6
+=== cell mml=131072 mns=2 at 2026-05-27T00:40:53Z ===
+[bench] base=http://100.66.113.93:8888 model=DSV4-W4A16-FP8 c=2 n=8 prompt=512 decode=256
+[bench] 1 warmup requests...
+[bench] running 8 measured requests at c=2...
+  +  256 tok in 18.66s = 13.7 tok/s, TPOT 72.9ms
+  +  256 tok in 18.66s = 13.7 tok/s, TPOT 72.9ms
+  +  256 tok in 19.55s = 13.1 tok/s, TPOT 76.4ms
+  +  256 tok in 19.55s = 13.1 tok/s, TPOT 76.4ms
+  +  256 tok in 18.68s = 13.7 tok/s, TPOT 73.0ms
+  +  256 tok in 18.68s = 13.7 tok/s, TPOT 73.0ms
+  +  256 tok in 20.05s = 12.8 tok/s, TPOT 78.3ms
+  +  256 tok in 20.05s = 12.8 tok/s, TPOT 78.3ms
+
+[bench] wrote results/pairA_baseline_428e08e_post_align/concurrency_wall/ctx131072_seq2_bench.json
+[bench] aggregate 26.6 tok/s | per-req median 13.4 tok/s | TPOT median 74.7ms
+ctx131072_seq2 READY boot=397s agg=26.6 median=13.4 TPOT=74.7
+=== cell mml=131072 mns=4 at 2026-05-27T00:49:11Z ===
+[bench] base=http://100.66.113.93:8888 model=DSV4-W4A16-FP8 c=4 n=16 prompt=512 decode=256
+[bench] 1 warmup requests...
+[bench] running 16 measured requests at c=4...
+  +  256 tok in 25.52s = 10.0 tok/s, TPOT 99.7ms
+  +  256 tok in 25.52s = 10.0 tok/s, TPOT 99.7ms
+  +  256 tok in 25.59s = 10.0 tok/s, TPOT 100.0ms
+  +  256 tok in 25.65s = 10.0 tok/s, TPOT 100.2ms
+  +  256 tok in 24.92s = 10.3 tok/s, TPOT 97.3ms
+  +  256 tok in 24.92s = 10.3 tok/s, TPOT 97.3ms
+  +  256 tok in 24.92s = 10.3 tok/s, TPOT 97.4ms
+  +  256 tok in 24.93s = 10.3 tok/s, TPOT 97.4ms
+  +  256 tok in 25.45s = 10.1 tok/s, TPOT 99.4ms
+  +  256 tok in 25.45s = 10.1 tok/s, TPOT 99.4ms
+  +  256 tok in 25.45s = 10.1 tok/s, TPOT 99.4ms
+  +  256 tok in 25.45s = 10.1 tok/s, TPOT 99.4ms
+  +  256 tok in 23.98s = 10.7 tok/s, TPOT 93.7ms
+  +  256 tok in 23.98s = 10.7 tok/s, TPOT 93.7ms
+  +  256 tok in 23.97s = 10.7 tok/s, TPOT 93.6ms
+  +  256 tok in 23.96s = 10.7 tok/s, TPOT 93.6ms
+
+[bench] wrote results/pairA_baseline_428e08e_post_align/concurrency_wall/ctx131072_seq4_bench.json
+[bench] aggregate 41.0 tok/s | per-req median 10.2 tok/s | TPOT median 98.4ms
+ctx131072_seq4 READY boot=430s agg=41.0 median=10.2 TPOT=98.4
+=== cell mml=131072 mns=8 at 2026-05-27T00:58:24Z ===
+[bench] base=http://100.66.113.93:8888 model=DSV4-W4A16-FP8 c=8 n=32 prompt=512 decode=256
+[bench] 1 warmup requests...
+[bench] running 32 measured requests at c=8...
+  +  256 tok in 31.76s = 8.1 tok/s, TPOT 124.1ms
+  +  256 tok in 32.01s = 8.0 tok/s, TPOT 125.1ms
+  +  256 tok in 32.01s = 8.0 tok/s, TPOT 125.1ms
+  +  256 tok in 32.01s = 8.0 tok/s, TPOT 125.1ms
+  +  256 tok in 32.01s = 8.0 tok/s, TPOT 125.1ms
+  +  256 tok in 32.01s = 8.0 tok/s, TPOT 125.1ms
+  +  256 tok in 32.02s = 8.0 tok/s, TPOT 125.1ms
+  +  256 tok in 32.02s = 8.0 tok/s, TPOT 125.1ms
+  +  256 tok in 31.38s = 8.2 tok/s, TPOT 122.6ms
+  +  256 tok in 31.37s = 8.2 tok/s, TPOT 122.5ms
+  +  256 tok in 31.37s = 8.2 tok/s, TPOT 122.5ms
+  +  256 tok in 31.37s = 8.2 tok/s, TPOT 122.5ms
+  +  256 tok in 31.37s = 8.2 tok/s, TPOT 122.5ms
+  +  256 tok in 31.37s = 8.2 tok/s, TPOT 122.5ms
+  +  256 tok in 31.37s = 8.2 tok/s, TPOT 122.5ms
+  +  256 tok in 31.37s = 8.2 tok/s, TPOT 122.5ms
+  +  256 tok in 29.57s = 8.7 tok/s, TPOT 115.5ms
+  +  256 tok in 29.56s = 8.7 tok/s, TPOT 115.5ms
+  +  256 tok in 29.56s = 8.7 tok/s, TPOT 115.5ms
+  +  256 tok in 29.56s = 8.7 tok/s, TPOT 115.5ms
+  +  256 tok in 29.56s = 8.7 tok/s, TPOT 115.5ms
+  +  256 tok in 29.56s = 8.7 tok/s, TPOT 115.5ms
+  +  256 tok in 29.56s = 8.7 tok/s, TPOT 115.5ms
+  +  256 tok in 29.56s = 8.7 tok/s, TPOT 115.5ms
+  +  256 tok in 30.97s = 8.3 tok/s, TPOT 121.0ms
+  +  256 tok in 31.00s = 8.3 tok/s, TPOT 121.1ms
+  +  256 tok in 31.00s = 8.3 tok/s, TPOT 121.1ms
+  +  256 tok in 31.00s = 8.3 tok/s, TPOT 121.1ms
+  +  256 tok in 31.00s = 8.3 tok/s, TPOT 121.1ms
+  +  256 tok in 31.00s = 8.3 tok/s, TPOT 121.1ms
+  +  256 tok in 31.00s = 8.3 tok/s, TPOT 121.1ms
+  +  256 tok in 31.00s = 8.3 tok/s, TPOT 121.1ms
+
+[bench] wrote results/pairA_baseline_428e08e_post_align/concurrency_wall/ctx131072_seq8_bench.json
+[bench] aggregate 66.1 tok/s | per-req median 8.2 tok/s | TPOT median 121.8ms
+ctx131072_seq8 READY boot=397s agg=66.1 median=8.2 TPOT=121.8
+=== cell mml=131072 mns=16 at 2026-05-27T01:07:29Z ===
+[bench] base=http://100.66.113.93:8888 model=DSV4-W4A16-FP8 c=16 n=64 prompt=512 decode=256
+[bench] 1 warmup requests...
+[bench] running 64 measured requests at c=16...
+  +  256 tok in 41.04s = 6.2 tok/s, TPOT 160.3ms
+  +  256 tok in 41.18s = 6.2 tok/s, TPOT 160.9ms
+  +  256 tok in 41.32s = 6.2 tok/s, TPOT 161.4ms
+  +  256 tok in 41.32s = 6.2 tok/s, TPOT 161.4ms
+  +  256 tok in 41.32s = 6.2 tok/s, TPOT 161.4ms
+  +  256 tok in 41.32s = 6.2 tok/s, TPOT 161.4ms
+  +  256 tok in 41.32s = 6.2 tok/s, TPOT 161.4ms
+  +  256 tok in 41.32s = 6.2 tok/s, TPOT 161.4ms
+  +  256 tok in 41.32s = 6.2 tok/s, TPOT 161.4ms
+  +  256 tok in 41.32s = 6.2 tok/s, TPOT 161.4ms
+  +  256 tok in 41.32s = 6.2 tok/s, TPOT 161.4ms
+  +  256 tok in 41.32s = 6.2 tok/s, TPOT 161.4ms
+  +  256 tok in 41.33s = 6.2 tok/s, TPOT 161.4ms
+  +  256 tok in 41.32s = 6.2 tok/s, TPOT 161.4ms
+  +  256 tok in 41.32s = 6.2 tok/s, TPOT 161.4ms
+  +  256 tok in 41.32s = 6.2 tok/s, TPOT 161.4ms
+  +  256 tok in 35.65s = 7.2 tok/s, TPOT 139.2ms
+  +  256 tok in 35.65s = 7.2 tok/s, TPOT 139.3ms
+  +  256 tok in 35.65s = 7.2 tok/s, TPOT 139.3ms
+  +  256 tok in 35.65s = 7.2 tok/s, TPOT 139.3ms
+  +  256 tok in 35.65s = 7.2 tok/s, TPOT 139.3ms
+  +  256 tok in 35.65s = 7.2 tok/s, TPOT 139.3ms
+  +  256 tok in 35.65s = 7.2 tok/s, TPOT 139.3ms
+  +  256 tok in 35.65s = 7.2 tok/s, TPOT 139.3ms
+  +  256 tok in 35.65s = 7.2 tok/s, TPOT 139.3ms
+  +  256 tok in 35.65s = 7.2 tok/s, TPOT 139.3ms
+  +  256 tok in 35.66s = 7.2 tok/s, TPOT 139.3ms
+  +  256 tok in 35.65s = 7.2 tok/s, TPOT 139.3ms
+  +  256 tok in 35.66s = 7.2 tok/s, TPOT 139.3ms
+  +  256 tok in 35.66s = 7.2 tok/s, TPOT 139.3ms
+  +  256 tok in 35.65s = 7.2 tok/s, TPOT 139.3ms
+  +  256 tok in 35.66s = 7.2 tok/s, TPOT 139.3ms
+  +  256 tok in 37.12s = 6.9 tok/s, TPOT 145.0ms
+  +  256 tok in 37.14s = 6.9 tok/s, TPOT 145.1ms
+  +  256 tok in 37.15s = 6.9 tok/s, TPOT 145.1ms
+  +  256 tok in 37.15s = 6.9 tok/s, TPOT 145.1ms
+  +  256 tok in 37.15s = 6.9 tok/s, TPOT 145.1ms
+  +  256 tok in 37.15s = 6.9 tok/s, TPOT 145.1ms
+  +  256 tok in 37.15s = 6.9 tok/s, TPOT 145.1ms
+  +  256 tok in 37.15s = 6.9 tok/s, TPOT 145.1ms
+  +  256 tok in 37.15s = 6.9 tok/s, TPOT 145.1ms
+  +  256 tok in 37.15s = 6.9 tok/s, TPOT 145.1ms
+  +  256 tok in 37.15s = 6.9 tok/s, TPOT 145.1ms
+  +  256 tok in 37.15s = 6.9 tok/s, TPOT 145.1ms
+  +  256 tok in 37.15s = 6.9 tok/s, TPOT 145.1ms
+  +  256 tok in 37.15s = 6.9 tok/s, TPOT 145.1ms
+  +  256 tok in 37.15s = 6.9 tok/s, TPOT 145.1ms
+  +  256 tok in 37.15s = 6.9 tok/s, TPOT 145.1ms
+  +  256 tok in 36.62s = 7.0 tok/s, TPOT 143.1ms
+  +  256 tok in 36.59s = 7.0 tok/s, TPOT 142.9ms
+  +  256 tok in 36.57s = 7.0 tok/s, TPOT 142.9ms
+  +  256 tok in 36.57s = 7.0 tok/s, TPOT 142.9ms
+  +  256 tok in 36.57s = 7.0 tok/s, TPOT 142.9ms
+  +  256 tok in 36.57s = 7.0 tok/s, TPOT 142.9ms
+  +  256 tok in 36.58s = 7.0 tok/s, TPOT 142.9ms
+  +  256 tok in 36.58s = 7.0 tok/s, TPOT 142.9ms
+  +  256 tok in 36.57s = 7.0 tok/s, TPOT 142.9ms
+  +  256 tok in 36.58s = 7.0 tok/s, TPOT 142.9ms
+  +  256 tok in 36.57s = 7.0 tok/s, TPOT 142.9ms
+  +  256 tok in 36.58s = 7.0 tok/s, TPOT 142.9ms
+  +  256 tok in 36.58s = 7.0 tok/s, TPOT 142.9ms
+  +  256 tok in 36.58s = 7.0 tok/s, TPOT 142.9ms
+  +  256 tok in 36.58s = 7.0 tok/s, TPOT 142.9ms
+  +  256 tok in 36.58s = 7.0 tok/s, TPOT 142.9ms
+
+[bench] wrote results/pairA_baseline_428e08e_post_align/concurrency_wall/ctx131072_seq16_bench.json
+[bench] aggregate 108.7 tok/s | per-req median 6.9 tok/s | TPOT median 144.0ms
+ctx131072_seq16 READY boot=397s agg=108.7 median=6.9 TPOT=144.0
+=== cell mml=4096 mns=8 at 2026-05-27T01:16:58Z ===
+[bench] base=http://100.66.113.93:8888 model=DSV4-W4A16-FP8 c=8 n=32 prompt=512 decode=256
+[bench] 1 warmup requests...
+[bench] running 32 measured requests at c=8...
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+[bench] ERROR: no successful requests
+ctx4096_seq8 READY boot=397s 
+=== cell mml=4096 mns=16 at 2026-05-27T01:23:40Z ===
+[bench] base=http://100.66.113.93:8888 model=DSV4-W4A16-FP8 c=16 n=64 prompt=512 decode=256
+[bench] 1 warmup requests...
+[bench] running 64 measured requests at c=16...
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+  request error: [Errno 104] Connection reset by peer
+  request error: [Errno 104] Connection reset by peer
+  request error: [Errno 104] Connection reset by peer
+  request error: [Errno 104] Connection reset by peer
+  request error: [Errno 104] Connection reset by peer
+  request error: HTTP Error 500: Internal Server Error
+  request error: [Errno 104] Connection reset by peer
+  request error: [Errno 104] Connection reset by peer
+  request error: [Errno 104] Connection reset by peer
+  request error: HTTP Error 500: Internal Server Error
+  request error: [Errno 104] Connection reset by peer
+  request error: [Errno 104] Connection reset by peer
+  request error: HTTP Error 500: Internal Server Error
+  request error: [Errno 104] Connection reset by peer
+  request error: [Errno 104] Connection reset by peer
+  request error: <urlopen error [Errno 111] Connection refused>
+  request error: <urlopen error [Errno 111] Connection refused>
+  request error: <urlopen error [Errno 111] Connection refused>
+  request error: <urlopen error [Errno 111] Connection refused>
+  request error: <urlopen error [Errno 111] Connection refused>
+  request error: <urlopen error [Errno 111] Connection refused>
+  request error: <urlopen error [Errno 111] Connection refused>
+  request error: <urlopen error [Errno 111] Connection refused>
+  request error: <urlopen error [Errno 111] Connection refused>
+  request error: HTTP Error 500: Internal Server Error
+  request error: <urlopen error [Errno 111] Connection refused>
+  request error: <urlopen error [Errno 111] Connection refused>
+  request error: <urlopen error [Errno 111] Connection refused>
+  request error: <urlopen error [Errno 111] Connection refused>
+  request error: <urlopen error [Errno 111] Connection refused>
+  request error: <urlopen error [Errno 111] Connection refused>
+  request error: <urlopen error [Errno 111] Connection refused>
+  request error: <urlopen error [Errno 111] Connection refused>
+  request error: <urlopen error [Errno 111] Connection refused>
+  request error: <urlopen error [Errno 111] Connection refused>
+  request error: <urlopen error [Errno 111] Connection refused>
+  request error: <urlopen error [Errno 111] Connection refused>
+  request error: <urlopen error [Errno 111] Connection refused>
+  request error: <urlopen error [Errno 111] Connection refused>
+  request error: <urlopen error [Errno 111] Connection refused>
+[bench] ERROR: no successful requests
+ctx4096_seq16 READY boot=396s 
+=== cell mml=4096 mns=32 at 2026-05-27T01:30:21Z ===
+[bench] base=http://100.66.113.93:8888 model=DSV4-W4A16-FP8 c=32 n=128 prompt=512 decode=256
+[bench] 1 warmup requests...
+[bench] running 128 measured requests at c=32...
+  +  256 tok in 47.03s = 5.4 tok/s, TPOT 183.7ms
+  +  256 tok in 47.03s = 5.4 tok/s, TPOT 183.7ms
+  +  256 tok in 47.36s = 5.4 tok/s, TPOT 185.0ms
+  +  256 tok in 47.36s = 5.4 tok/s, TPOT 185.0ms
+  +  256 tok in 47.36s = 5.4 tok/s, TPOT 185.0ms
+  +  256 tok in 47.36s = 5.4 tok/s, TPOT 185.0ms
+  +  256 tok in 47.36s = 5.4 tok/s, TPOT 185.0ms
+  +  256 tok in 47.35s = 5.4 tok/s, TPOT 185.0ms
+  +  256 tok in 47.36s = 5.4 tok/s, TPOT 185.0ms
+  +  256 tok in 47.36s = 5.4 tok/s, TPOT 185.0ms
+  +  256 tok in 47.35s = 5.4 tok/s, TPOT 185.0ms
+  +  256 tok in 47.36s = 5.4 tok/s, TPOT 185.0ms
+  +  256 tok in 47.36s = 5.4 tok/s, TPOT 185.0ms
+  +  256 tok in 47.36s = 5.4 tok/s, TPOT 185.0ms
+  +  256 tok in 47.36s = 5.4 tok/s, TPOT 185.0ms
+  +  256 tok in 47.36s = 5.4 tok/s, TPOT 185.0ms
+  +  256 tok in 47.36s = 5.4 tok/s, TPOT 185.0ms
+  +  256 tok in 47.36s = 5.4 tok/s, TPOT 185.0ms
+  +  256 tok in 47.36s = 5.4 tok/s, TPOT 185.0ms
+  +  256 tok in 47.36s = 5.4 tok/s, TPOT 185.0ms
+  +  256 tok in 47.36s = 5.4 tok/s, TPOT 185.0ms
+  +  256 tok in 47.36s = 5.4 tok/s, TPOT 185.0ms
+  +  256 tok in 47.36s = 5.4 tok/s, TPOT 185.0ms
+  +  256 tok in 47.36s = 5.4 tok/s, TPOT 185.0ms
+  +  256 tok in 47.36s = 5.4 tok/s, TPOT 185.0ms
+  +  256 tok in 47.36s = 5.4 tok/s, TPOT 185.0ms
+  +  256 tok in 47.36s = 5.4 tok/s, TPOT 185.0ms
+  +  256 tok in 47.36s = 5.4 tok/s, TPOT 185.0ms
+  +  256 tok in 47.37s = 5.4 tok/s, TPOT 185.0ms
+  +  256 tok in 47.36s = 5.4 tok/s, TPOT 185.0ms
+  +  256 tok in 47.37s = 5.4 tok/s, TPOT 185.0ms
+  +  256 tok in 47.36s = 5.4 tok/s, TPOT 185.0ms
+  +  256 tok in 41.45s = 6.2 tok/s, TPOT 161.9ms
+  +  256 tok in 41.45s = 6.2 tok/s, TPOT 161.9ms
+  +  256 tok in 41.45s = 6.2 tok/s, TPOT 161.9ms
+  +  256 tok in 41.44s = 6.2 tok/s, TPOT 161.9ms
+  +  256 tok in 41.44s = 6.2 tok/s, TPOT 161.9ms
+  +  256 tok in 41.44s = 6.2 tok/s, TPOT 161.9ms
+  +  256 tok in 41.44s = 6.2 tok/s, TPOT 161.9ms
+  +  256 tok in 41.44s = 6.2 tok/s, TPOT 161.9ms
+  +  256 tok in 41.44s = 6.2 tok/s, TPOT 161.9ms
+  +  256 tok in 41.45s = 6.2 tok/s, TPOT 161.9ms
+  +  256 tok in 41.44s = 6.2 tok/s, TPOT 161.9ms
+  +  256 tok in 41.45s = 6.2 tok/s, TPOT 161.9ms
+  +  256 tok in 41.44s = 6.2 tok/s, TPOT 161.9ms
+  +  256 tok in 41.44s = 6.2 tok/s, TPOT 161.9ms
+  +  256 tok in 41.44s = 6.2 tok/s, TPOT 161.9ms
+  +  256 tok in 41.44s = 6.2 tok/s, TPOT 161.9ms
+  +  256 tok in 41.45s = 6.2 tok/s, TPOT 161.9ms
+  +  256 tok in 41.44s = 6.2 tok/s, TPOT 161.9ms
+  +  256 tok in 41.45s = 6.2 tok/s, TPOT 161.9ms
+  +  256 tok in 41.45s = 6.2 tok/s, TPOT 161.9ms
+  +  256 tok in 41.45s = 6.2 tok/s, TPOT 161.9ms
+  +  256 tok in 41.45s = 6.2 tok/s, TPOT 161.9ms
+  +  256 tok in 41.45s = 6.2 tok/s, TPOT 161.9ms
+  +  256 tok in 41.45s = 6.2 tok/s, TPOT 161.9ms
+  +  256 tok in 41.45s = 6.2 tok/s, TPOT 161.9ms
+  +  256 tok in 41.45s = 6.2 tok/s, TPOT 161.9ms
+  +  256 tok in 41.45s = 6.2 tok/s, TPOT 161.9ms
+  +  256 tok in 41.45s = 6.2 tok/s, TPOT 161.9ms
+  +  256 tok in 41.45s = 6.2 tok/s, TPOT 161.9ms
+  +  256 tok in 41.45s = 6.2 tok/s, TPOT 161.9ms
+  +  256 tok in 41.45s = 6.2 tok/s, TPOT 161.9ms
+  +  256 tok in 41.45s = 6.2 tok/s, TPOT 161.9ms
+  +  256 tok in 41.12s = 6.2 tok/s, TPOT 160.6ms
+  +  256 tok in 41.12s = 6.2 tok/s, TPOT 160.6ms
+  +  256 tok in 41.11s = 6.2 tok/s, TPOT 160.6ms
+  +  256 tok in 41.11s = 6.2 tok/s, TPOT 160.6ms
+  +  256 tok in 41.11s = 6.2 tok/s, TPOT 160.6ms
+  +  256 tok in 41.12s = 6.2 tok/s, TPOT 160.6ms
+  +  256 tok in 41.11s = 6.2 tok/s, TPOT 160.6ms
+  +  256 tok in 41.12s = 6.2 tok/s, TPOT 160.6ms
+  +  256 tok in 41.11s = 6.2 tok/s, TPOT 160.6ms
+  +  256 tok in 41.11s = 6.2 tok/s, TPOT 160.6ms
+  +  256 tok in 41.12s = 6.2 tok/s, TPOT 160.6ms
+  +  256 tok in 41.12s = 6.2 tok/s, TPOT 160.6ms
+  +  256 tok in 41.12s = 6.2 tok/s, TPOT 160.6ms
+  +  256 tok in 41.12s = 6.2 tok/s, TPOT 160.6ms
+  +  256 tok in 41.12s = 6.2 tok/s, TPOT 160.6ms
+  +  256 tok in 41.12s = 6.2 tok/s, TPOT 160.6ms
+  +  256 tok in 41.12s = 6.2 tok/s, TPOT 160.6ms
+  +  256 tok in 41.12s = 6.2 tok/s, TPOT 160.6ms
+  +  256 tok in 41.11s = 6.2 tok/s, TPOT 160.6ms
+  +  256 tok in 41.12s = 6.2 tok/s, TPOT 160.6ms
+  +  256 tok in 41.12s = 6.2 tok/s, TPOT 160.6ms
+  +  256 tok in 41.11s = 6.2 tok/s, TPOT 160.6ms
+  +  256 tok in 41.12s = 6.2 tok/s, TPOT 160.6ms
+  +  256 tok in 41.12s = 6.2 tok/s, TPOT 160.6ms
+  +  256 tok in 41.12s = 6.2 tok/s, TPOT 160.6ms
+  +  256 tok in 41.12s = 6.2 tok/s, TPOT 160.6ms
+  +  256 tok in 41.12s = 6.2 tok/s, TPOT 160.6ms
+  +  256 tok in 41.12s = 6.2 tok/s, TPOT 160.6ms
+  +  256 tok in 41.12s = 6.2 tok/s, TPOT 160.6ms
+  +  256 tok in 41.12s = 6.2 tok/s, TPOT 160.6ms
+  +  256 tok in 41.12s = 6.2 tok/s, TPOT 160.6ms
+  +  256 tok in 41.12s = 6.2 tok/s, TPOT 160.6ms
+  +  256 tok in 42.74s = 6.0 tok/s, TPOT 167.0ms
+  +  256 tok in 42.74s = 6.0 tok/s, TPOT 167.0ms
+  +  256 tok in 42.77s = 6.0 tok/s, TPOT 167.1ms
+  +  256 tok in 42.77s = 6.0 tok/s, TPOT 167.1ms
+  +  256 tok in 42.77s = 6.0 tok/s, TPOT 167.1ms
+  +  256 tok in 42.77s = 6.0 tok/s, TPOT 167.1ms
+  +  256 tok in 42.77s = 6.0 tok/s, TPOT 167.1ms
+  +  256 tok in 42.77s = 6.0 tok/s, TPOT 167.1ms
+  +  256 tok in 42.77s = 6.0 tok/s, TPOT 167.1ms
+  +  256 tok in 42.77s = 6.0 tok/s, TPOT 167.1ms
+  +  256 tok in 42.77s = 6.0 tok/s, TPOT 167.1ms
+  +  256 tok in 42.77s = 6.0 tok/s, TPOT 167.1ms
+  +  256 tok in 42.77s = 6.0 tok/s, TPOT 167.1ms
+  +  256 tok in 42.77s = 6.0 tok/s, TPOT 167.1ms
+  +  256 tok in 42.77s = 6.0 tok/s, TPOT 167.1ms
+  +  256 tok in 42.77s = 6.0 tok/s, TPOT 167.1ms
+  +  256 tok in 42.77s = 6.0 tok/s, TPOT 167.1ms
+  +  256 tok in 42.77s = 6.0 tok/s, TPOT 167.1ms
+  +  256 tok in 42.77s = 6.0 tok/s, TPOT 167.1ms
+  +  256 tok in 42.77s = 6.0 tok/s, TPOT 167.1ms
+  +  256 tok in 42.77s = 6.0 tok/s, TPOT 167.1ms
+  +  256 tok in 42.77s = 6.0 tok/s, TPOT 167.1ms
+  +  256 tok in 42.77s = 6.0 tok/s, TPOT 167.1ms
+  +  256 tok in 42.77s = 6.0 tok/s, TPOT 167.1ms
+  +  256 tok in 42.77s = 6.0 tok/s, TPOT 167.1ms
+  +  256 tok in 42.77s = 6.0 tok/s, TPOT 167.1ms
+  +  256 tok in 42.77s = 6.0 tok/s, TPOT 167.1ms
+  +  256 tok in 42.77s = 6.0 tok/s, TPOT 167.1ms
+  +  256 tok in 42.77s = 6.0 tok/s, TPOT 167.1ms
+  +  256 tok in 42.77s = 6.0 tok/s, TPOT 167.1ms
+  +  256 tok in 42.77s = 6.0 tok/s, TPOT 167.1ms
+  +  256 tok in 42.77s = 6.0 tok/s, TPOT 167.1ms
+
+[bench] wrote results/pairA_baseline_428e08e_post_align/concurrency_wall/ctx4096_seq32_bench.json
+[bench] aggregate 189.7 tok/s | per-req median 6.1 tok/s | TPOT median 164.4ms
+ctx4096_seq32 READY boot=396s agg=189.7 median=6.1 TPOT=164.4
+=== sweep done ==
+=== concurrency wall — varying seqs at fixed ctx
+ctx16384_seq2 READY boot=396s agg=29.7 median=14.9 TPOT=67.0
+ctx16384_seq4 READY boot=397s agg=47.9 median=12.0 TPOT=83.6
+ctx16384_seq8 BOOT_FAIL_rc3 boot=11s
+ctx16384_seq16 READY boot=401s agg=126.2 median=8.1 TPOT=122.9
+ctx65536_seq2 READY boot=429s agg=30.3 median=15.2 TPOT=65.9
+ctx65536_seq4 READY boot=398s agg=47.6 median=11.9 TPOT=84.1
+ctx65536_seq8 READY boot=397s agg=73.1 median=9.3 TPOT=107.7
+ctx65536_seq16 READY boot=428s agg=124.0 median=8.1 TPOT=123.6
+ctx131072_seq2 READY boot=397s agg=26.6 median=13.4 TPOT=74.7
+ctx131072_seq4 READY boot=430s agg=41.0 median=10.2 TPOT=98.4
+ctx131072_seq8 READY boot=397s agg=66.1 median=8.2 TPOT=121.8
+ctx131072_seq16 READY boot=397s agg=108.7 median=6.9 TPOT=144.0
+ctx4096_seq8 READY boot=397s 
+ctx4096_seq16 READY boot=396s 
+ctx4096_seq32 READY boot=396s agg=189.7 median=6.1 TPOT=164.4
+=== sweep done ==

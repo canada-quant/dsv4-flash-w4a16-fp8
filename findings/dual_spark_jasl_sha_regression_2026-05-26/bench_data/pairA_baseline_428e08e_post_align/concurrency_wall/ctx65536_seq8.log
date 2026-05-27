@@ -1,0 +1,103 @@
+=== cell mml=65536 mns=8 at 2026-05-27T00:22:16Z ===
+[17:22:16] [1/9] SSH reachability check...
+[17:22:17]   ok — both Sparks reachable
+[17:22:17] [2/9] skipping model download (--skip-download)
+[17:22:17] [3/9] skipping network setup (--skip-network)
+[17:22:17] [4-5/9] skipping build (--skip-build)
+[17:22:17] [6/9] Stopping any existing vllm_node containers...
+vllm_node
+vllm_node
+[17:22:25] [7/9] Launching worker rank 1 on spark-2 (headless)...
+73983ea2475280cea5b01834582f6d4293163585eece975138ac5910d1bf78a3
+[17:22:31] [8/9] Launching head rank 0 on spark-1 (API server on :8888)...
+ab3a3a5cfe1cbff7e443a7c56bcfaf4f1da05c78382c579ee9aa08c6fce0e65a
+[17:22:32] [9/9] Waiting for /health=200 on http://spark-1:8888 (~5-7 min cold start)...
+[17:22:33]   still booting (30s elapsed, head=running, worker=running)...
+[17:23:04]   still booting (60s elapsed, head=running, worker=running)...
+[17:23:36]   still booting (90s elapsed, head=running, worker=running)...
+[17:24:08]   still booting (120s elapsed, head=running, worker=running)...
+[17:24:40]   still booting (150s elapsed, head=running, worker=running)...
+[17:25:11]   still booting (180s elapsed, head=running, worker=running)...
+[17:25:43]   still booting (210s elapsed, head=running, worker=running)...
+[17:26:15]   still booting (240s elapsed, head=running, worker=running)...
+[17:26:47]   still booting (270s elapsed, head=running, worker=running)...
+[17:27:18]   still booting (300s elapsed, head=running, worker=running)...
+[17:27:50]   still booting (330s elapsed, head=running, worker=running)...
+[17:28:22]   still booting (360s elapsed, head=running, worker=running)...
+[17:28:52] 
+[17:28:52] ========================================================================
+[17:28:52] ENGINE READY ✓
+[17:28:52]   endpoint:        http://spark-1:8888/v1
+[17:28:52]   model names:     DSV4-W4A16-FP8 | deepseek-ai/DeepSeek-V4-Flash | deepseek-v4-flash
+[17:28:52]   context:         65536 tokens, max-num-seqs=8
+[17:28:52]   vllm ref:        jasl/vllm@428e08e
+[17:28:52]   image:           vllm-w4a16-dsv4:baseline-428e08e
+[17:28:52] ========================================================================
+[17:28:53] 
+[17:28:53] Build provenance written to /tmp/dsv4-spark-build-metadata-20260526-172852.yaml:
+  build_date: 2026-05-26T16:23:35Z
+  build_script_commit: 594631f7aed06f7f3f77a7a26fa7def1d3a3b5d1
+  vllm_version: 0.1.dev16268+ga1cc4fdde.d20260526.cu132
+  vllm_commit: a1cc4fddeea50b7d44e8f0c62261305cc189caa8
+  flashinfer_commit: 56d537a1
+  gpu_arch: 12.1a
+  base_image: nvidia/cuda:13.2.0-devel-ubuntu24.04
+  build_args:
+    vllm_ref: 428e08e
+    transformers_5: false
+    exp_mxfp4: false
+    vllm_prs: ""
+    build_jobs: 16
+[17:28:53] 
+[17:28:53] If you hit issues, please paste the contents of /tmp/dsv4-spark-build-metadata-20260526-172852.yaml with your bug report.
+[17:28:53] 
+[17:28:53] Smoke test:
+[17:28:53] 
+  curl http://spark-1:8888/v1/chat/completions \
+    -H "Content-Type: application/json" \
+    -d '{
+      "model": "deepseek-v4-flash",
+      "messages": [{"role": "user", "content": "What is 7*8?"}],
+      "max_tokens": 50,
+      "temperature": 0
+    }'
+[17:28:53] 
+[17:28:53] More examples (think-max, tool calling): findings/QUICKSTART_DUAL_SPARK.md §6
+[bench] base=http://100.66.113.93:8888 model=DSV4-W4A16-FP8 c=8 n=32 prompt=512 decode=256
+[bench] 1 warmup requests...
+[bench] running 32 measured requests at c=8...
+  +  256 tok in 29.33s = 8.7 tok/s, TPOT 114.6ms
+  +  256 tok in 29.33s = 8.7 tok/s, TPOT 114.6ms
+  +  256 tok in 29.69s = 8.6 tok/s, TPOT 116.0ms
+  +  256 tok in 29.69s = 8.6 tok/s, TPOT 116.0ms
+  +  256 tok in 29.69s = 8.6 tok/s, TPOT 116.0ms
+  +  256 tok in 29.69s = 8.6 tok/s, TPOT 116.0ms
+  +  256 tok in 29.69s = 8.6 tok/s, TPOT 116.0ms
+  +  256 tok in 29.69s = 8.6 tok/s, TPOT 116.0ms
+  +  256 tok in 27.87s = 9.2 tok/s, TPOT 108.9ms
+  +  256 tok in 27.87s = 9.2 tok/s, TPOT 108.9ms
+  +  256 tok in 27.74s = 9.2 tok/s, TPOT 108.4ms
+  +  256 tok in 27.74s = 9.2 tok/s, TPOT 108.4ms
+  +  256 tok in 27.74s = 9.2 tok/s, TPOT 108.4ms
+  +  256 tok in 27.74s = 9.2 tok/s, TPOT 108.4ms
+  +  256 tok in 27.74s = 9.2 tok/s, TPOT 108.4ms
+  +  256 tok in 27.74s = 9.2 tok/s, TPOT 108.4ms
+  +  256 tok in 27.18s = 9.4 tok/s, TPOT 106.2ms
+  +  256 tok in 27.18s = 9.4 tok/s, TPOT 106.2ms
+  +  256 tok in 27.17s = 9.4 tok/s, TPOT 106.1ms
+  +  256 tok in 27.17s = 9.4 tok/s, TPOT 106.2ms
+  +  256 tok in 27.17s = 9.4 tok/s, TPOT 106.2ms
+  +  256 tok in 27.17s = 9.4 tok/s, TPOT 106.2ms
+  +  256 tok in 27.17s = 9.4 tok/s, TPOT 106.1ms
+  +  256 tok in 27.17s = 9.4 tok/s, TPOT 106.2ms
+  +  256 tok in 27.41s = 9.3 tok/s, TPOT 107.1ms
+  +  256 tok in 27.41s = 9.3 tok/s, TPOT 107.1ms
+  +  256 tok in 27.42s = 9.3 tok/s, TPOT 107.1ms
+  +  256 tok in 27.42s = 9.3 tok/s, TPOT 107.1ms
+  +  256 tok in 27.42s = 9.3 tok/s, TPOT 107.1ms
+  +  256 tok in 27.42s = 9.3 tok/s, TPOT 107.1ms
+  +  256 tok in 27.42s = 9.3 tok/s, TPOT 107.1ms
+  +  256 tok in 27.42s = 9.3 tok/s, TPOT 107.1ms
+
+[bench] wrote results/pairA_baseline_428e08e_post_align/concurrency_wall/ctx65536_seq8_bench.json
+[bench] aggregate 73.1 tok/s | per-req median 9.3 tok/s | TPOT median 107.7ms

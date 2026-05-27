@@ -1,0 +1,33 @@
+[chain] sweep done, relaunching Pair A at 1M ctx for HumanEval
+Setting batch size to 1
+Initializing a decoder model: DSV4-W4A16-FP8 ...
+Sanitized code outputs will be saved to /home/paul/dsv4-test-2gb10/results/pairA_baseline_428e08e_post_align/quality/humaneval/DSV4-W4A16-FP8_openai_temp_0.jsonl
+Raw outputs will be saved to /home/paul/dsv4-test-2gb10/results/pairA_baseline_428e08e_post_align/quality/humaneval/DSV4-W4A16-FP8_openai_temp_0.raw.jsonl
+Downloading dataset from https://github.com/evalplus/humanevalplus_release/releases/download/v0.1.10/HumanEvalPlus.jsonl.gz
+Codegen: HumanEval/0 @ DSV4-W4A16-FP8
+humaneval •  0%                                            0/164 • 0:00:00
+Traceback (most recent call last):
+  File "/home/paul/.local/bin/evalplus.codegen", line 8, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/paul/.local/lib/python3.12/site-packages/evalplus/codegen.py", line 238, in main
+    Fire(run_codegen)
+  File "/home/paul/.local/lib/python3.12/site-packages/fire/core.py", line 135, in Fire
+    component_trace = _Fire(component, args, parsed_flag_args, context, name)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/paul/.local/lib/python3.12/site-packages/fire/core.py", line 468, in _Fire
+    component, remaining_args = _CallAndUpdateTrace(
+                                ^^^^^^^^^^^^^^^^^^^^
+  File "/home/paul/.local/lib/python3.12/site-packages/fire/core.py", line 684, in _CallAndUpdateTrace
+    component = fn(*varargs, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/paul/.local/lib/python3.12/site-packages/evalplus/codegen.py", line 215, in run_codegen
+    codegen(
+  File "/home/paul/.local/lib/python3.12/site-packages/evalplus/codegen.py", line 81, in codegen
+    outputs = model.codegen(
+              ^^^^^^^^^^^^^^
+  File "/home/paul/.local/lib/python3.12/site-packages/evalplus/provider/openai.py", line 21, in codegen
+    assert self.temperature > 0, "Temperature must be positive for sampling"
+           ^^^^^^^^^^^^^^^^^^^^
+AssertionError: Temperature must be positive for sampling
+[humaneval codegen done — eval separate step]

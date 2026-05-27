@@ -1,0 +1,86 @@
+{
+  "config": {
+    "base": "http://100.66.113.93:8888",
+    "model": "DSV4-W4A16-FP8",
+    "concurrency": 2,
+    "requests": 8,
+    "prompt_tokens": 512,
+    "decode_tokens": 256
+  },
+  "results": [
+    {
+      "wall_s": 18.656147718429565,
+      "prompt_tokens": 521,
+      "completion_tokens": 256,
+      "throughput_tps": 13.722018278570403,
+      "tpot_ms": 72.87557702511549
+    },
+    {
+      "wall_s": 18.656644821166992,
+      "prompt_tokens": 521,
+      "completion_tokens": 256,
+      "throughput_tps": 13.72165265801458,
+      "tpot_ms": 72.87751883268356
+    },
+    {
+      "wall_s": 19.547796726226807,
+      "prompt_tokens": 521,
+      "completion_tokens": 256,
+      "throughput_tps": 13.096105079532109,
+      "tpot_ms": 76.35858096182346
+    },
+    {
+      "wall_s": 19.548268795013428,
+      "prompt_tokens": 521,
+      "completion_tokens": 256,
+      "throughput_tps": 13.095788823269256,
+      "tpot_ms": 76.3604249805212
+    },
+    {
+      "wall_s": 18.67625904083252,
+      "prompt_tokens": 521,
+      "completion_tokens": 256,
+      "throughput_tps": 13.707241875383009,
+      "tpot_ms": 72.95413687825203
+    },
+    {
+      "wall_s": 18.676291942596436,
+      "prompt_tokens": 521,
+      "completion_tokens": 256,
+      "throughput_tps": 13.707217727525526,
+      "tpot_ms": 72.95426540076733
+    },
+    {
+      "wall_s": 20.048837661743164,
+      "prompt_tokens": 521,
+      "completion_tokens": 256,
+      "throughput_tps": 12.768820034315238,
+      "tpot_ms": 78.31577211618423
+    },
+    {
+      "wall_s": 20.04869556427002,
+      "prompt_tokens": 521,
+      "completion_tokens": 256,
+      "throughput_tps": 12.768910534819678,
+      "tpot_ms": 78.31521704792976
+    }
+  ],
+  "summary": {
+    "successful": 8,
+    "failed": 0,
+    "total_wall_s": 76.93121004104614,
+    "total_output_tokens": 2048,
+    "aggregate_tok_per_s": 26.621185327870222,
+    "per_request_tps": {
+      "median": 13.401661403528816,
+      "mean": 13.323469376428726,
+      "min": 12.768820034315238,
+      "max": 13.722018278570403
+    },
+    "tpot_ms": {
+      "median": 74.6564231812954,
+      "p95": 78.31521704792976,
+      "mean": 75.12643665540963
+    }
+  }
+}

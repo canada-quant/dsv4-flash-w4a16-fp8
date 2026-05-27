@@ -1,0 +1,35 @@
+{
+  "config": {
+    "base": "http://100.87.54.16:8888",
+    "model": "DSV4-W4A16-FP8",
+    "context_tokens": 262144,
+    "depths": [
+      0.1,
+      0.5,
+      0.9
+    ]
+  },
+  "results": [
+    {
+      "depth": 0.1,
+      "ctx": 262144,
+      "error": "timed out"
+    },
+    {
+      "depth": 0.5,
+      "ctx": 262144,
+      "error": "timed out"
+    },
+    {
+      "depth": 0.9,
+      "ctx": 262144,
+      "error": "timed out"
+    }
+  ],
+  "summary": {
+    "n": 3,
+    "code_found": 0,
+    "city_found": 0,
+    "both_found": 0
+  }
+}
