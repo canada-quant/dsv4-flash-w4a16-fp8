@@ -1,0 +1,415 @@
+{
+  "config": {
+    "base": "http://100.87.54.16:8888",
+    "model": "deepseek-v4-flash",
+    "limit": 50
+  },
+  "summary": {
+    "n": 50,
+    "correct": 47,
+    "accuracy": 0.94,
+    "errors": 0
+  },
+  "results": [
+    {
+      "i": 0,
+      "gold": "18",
+      "extracted": "18",
+      "correct": true,
+      "wall_s": 14.586900234222412,
+      "completion_tokens": 130
+    },
+    {
+      "i": 1,
+      "gold": "3",
+      "extracted": "3",
+      "correct": true,
+      "wall_s": 9.370237588882446,
+      "completion_tokens": 84
+    },
+    {
+      "i": 2,
+      "gold": "70000",
+      "extracted": null,
+      "correct": false,
+      "wall_s": 33.453235149383545,
+      "completion_tokens": 512
+    },
+    {
+      "i": 3,
+      "gold": "540",
+      "extracted": "540",
+      "correct": true,
+      "wall_s": 9.758400440216064,
+      "completion_tokens": 131
+    },
+    {
+      "i": 4,
+      "gold": "20",
+      "extracted": "20",
+      "correct": true,
+      "wall_s": 13.546966314315796,
+      "completion_tokens": 167
+    },
+    {
+      "i": 5,
+      "gold": "64",
+      "extracted": "64",
+      "correct": true,
+      "wall_s": 18.10023546218872,
+      "completion_tokens": 261
+    },
+    {
+      "i": 6,
+      "gold": "260",
+      "extracted": "260",
+      "correct": true,
+      "wall_s": 9.042319059371948,
+      "completion_tokens": 123
+    },
+    {
+      "i": 7,
+      "gold": "160",
+      "extracted": "160",
+      "correct": true,
+      "wall_s": 31.037978887557983,
+      "completion_tokens": 439
+    },
+    {
+      "i": 8,
+      "gold": "45",
+      "extracted": "45",
+      "correct": true,
+      "wall_s": 39.08395838737488,
+      "completion_tokens": 460
+    },
+    {
+      "i": 9,
+      "gold": "460",
+      "extracted": "460",
+      "correct": true,
+      "wall_s": 11.304677248001099,
+      "completion_tokens": 130
+    },
+    {
+      "i": 10,
+      "gold": "366",
+      "extracted": "366",
+      "correct": true,
+      "wall_s": 16.941610097885132,
+      "completion_tokens": 202
+    },
+    {
+      "i": 11,
+      "gold": "694",
+      "extracted": null,
+      "correct": false,
+      "wall_s": 8.08673357963562,
+      "completion_tokens": 88
+    },
+    {
+      "i": 12,
+      "gold": "13",
+      "extracted": null,
+      "correct": false,
+      "wall_s": 41.20136594772339,
+      "completion_tokens": 512
+    },
+    {
+      "i": 13,
+      "gold": "18",
+      "extracted": "18",
+      "correct": true,
+      "wall_s": 31.160680294036865,
+      "completion_tokens": 393
+    },
+    {
+      "i": 14,
+      "gold": "60",
+      "extracted": "60",
+      "correct": true,
+      "wall_s": 22.840303659439087,
+      "completion_tokens": 247
+    },
+    {
+      "i": 15,
+      "gold": "125",
+      "extracted": "125",
+      "correct": true,
+      "wall_s": 13.95001482963562,
+      "completion_tokens": 180
+    },
+    {
+      "i": 16,
+      "gold": "230",
+      "extracted": "230",
+      "correct": true,
+      "wall_s": 11.51245379447937,
+      "completion_tokens": 167
+    },
+    {
+      "i": 17,
+      "gold": "57500",
+      "extracted": "57500",
+      "correct": true,
+      "wall_s": 13.048800945281982,
+      "completion_tokens": 164
+    },
+    {
+      "i": 18,
+      "gold": "7",
+      "extracted": "7",
+      "correct": true,
+      "wall_s": 11.485583066940308,
+      "completion_tokens": 142
+    },
+    {
+      "i": 19,
+      "gold": "6",
+      "extracted": "6",
+      "correct": true,
+      "wall_s": 20.593345642089844,
+      "completion_tokens": 309
+    },
+    {
+      "i": 20,
+      "gold": "15",
+      "extracted": "15",
+      "correct": true,
+      "wall_s": 14.588762283325195,
+      "completion_tokens": 257
+    },
+    {
+      "i": 21,
+      "gold": "14",
+      "extracted": "14",
+      "correct": true,
+      "wall_s": 21.954793453216553,
+      "completion_tokens": 273
+    },
+    {
+      "i": 22,
+      "gold": "7",
+      "extracted": "7",
+      "correct": true,
+      "wall_s": 9.490808010101318,
+      "completion_tokens": 117
+    },
+    {
+      "i": 23,
+      "gold": "8",
+      "extracted": "8",
+      "correct": true,
+      "wall_s": 9.414927005767822,
+      "completion_tokens": 117
+    },
+    {
+      "i": 24,
+      "gold": "26",
+      "extracted": "26",
+      "correct": true,
+      "wall_s": 10.784186363220215,
+      "completion_tokens": 142
+    },
+    {
+      "i": 25,
+      "gold": "2",
+      "extracted": "2",
+      "correct": true,
+      "wall_s": 17.042454719543457,
+      "completion_tokens": 207
+    },
+    {
+      "i": 26,
+      "gold": "243",
+      "extracted": "243",
+      "correct": true,
+      "wall_s": 12.632396459579468,
+      "completion_tokens": 150
+    },
+    {
+      "i": 27,
+      "gold": "16",
+      "extracted": "16",
+      "correct": true,
+      "wall_s": 9.69933819770813,
+      "completion_tokens": 135
+    },
+    {
+      "i": 28,
+      "gold": "25",
+      "extracted": "25",
+      "correct": true,
+      "wall_s": 8.84025764465332,
+      "completion_tokens": 116
+    },
+    {
+      "i": 29,
+      "gold": "104",
+      "extracted": "104",
+      "correct": true,
+      "wall_s": 10.837712049484253,
+      "completion_tokens": 144
+    },
+    {
+      "i": 30,
+      "gold": "109",
+      "extracted": "109",
+      "correct": true,
+      "wall_s": 13.935715913772583,
+      "completion_tokens": 184
+    },
+    {
+      "i": 31,
+      "gold": "80",
+      "extracted": "80",
+      "correct": true,
+      "wall_s": 16.190438270568848,
+      "completion_tokens": 201
+    },
+    {
+      "i": 32,
+      "gold": "35",
+      "extracted": "35",
+      "correct": true,
+      "wall_s": 6.068164110183716,
+      "completion_tokens": 74
+    },
+    {
+      "i": 33,
+      "gold": "70",
+      "extracted": "70",
+      "correct": true,
+      "wall_s": 11.470635175704956,
+      "completion_tokens": 171
+    },
+    {
+      "i": 34,
+      "gold": "23",
+      "extracted": "23",
+      "correct": true,
+      "wall_s": 11.995324611663818,
+      "completion_tokens": 175
+    },
+    {
+      "i": 35,
+      "gold": "9",
+      "extracted": "9",
+      "correct": true,
+      "wall_s": 9.780905723571777,
+      "completion_tokens": 137
+    },
+    {
+      "i": 36,
+      "gold": "75",
+      "extracted": "75",
+      "correct": true,
+      "wall_s": 11.064248085021973,
+      "completion_tokens": 171
+    },
+    {
+      "i": 37,
+      "gold": "2",
+      "extracted": "2",
+      "correct": true,
+      "wall_s": 24.196682691574097,
+      "completion_tokens": 397
+    },
+    {
+      "i": 38,
+      "gold": "10",
+      "extracted": "10",
+      "correct": true,
+      "wall_s": 28.162970781326294,
+      "completion_tokens": 448
+    },
+    {
+      "i": 39,
+      "gold": "18",
+      "extracted": "18",
+      "correct": true,
+      "wall_s": 16.567346334457397,
+      "completion_tokens": 306
+    },
+    {
+      "i": 40,
+      "gold": "8",
+      "extracted": "8",
+      "correct": true,
+      "wall_s": 12.861390829086304,
+      "completion_tokens": 154
+    },
+    {
+      "i": 41,
+      "gold": "200",
+      "extracted": "200",
+      "correct": true,
+      "wall_s": 16.805466413497925,
+      "completion_tokens": 242
+    },
+    {
+      "i": 42,
+      "gold": "26",
+      "extracted": "26",
+      "correct": true,
+      "wall_s": 5.441704034805298,
+      "completion_tokens": 60
+    },
+    {
+      "i": 43,
+      "gold": "48",
+      "extracted": "48",
+      "correct": true,
+      "wall_s": 29.613938093185425,
+      "completion_tokens": 372
+    },
+    {
+      "i": 44,
+      "gold": "20",
+      "extracted": "20",
+      "correct": true,
+      "wall_s": 15.422783851623535,
+      "completion_tokens": 221
+    },
+    {
+      "i": 45,
+      "gold": "104",
+      "extracted": "104",
+      "correct": true,
+      "wall_s": 21.525658130645752,
+      "completion_tokens": 266
+    },
+    {
+      "i": 46,
+      "gold": "163",
+      "extracted": "163",
+      "correct": true,
+      "wall_s": 13.205971479415894,
+      "completion_tokens": 158
+    },
+    {
+      "i": 47,
+      "gold": "800",
+      "extracted": "800",
+      "correct": true,
+      "wall_s": 15.434274911880493,
+      "completion_tokens": 240
+    },
+    {
+      "i": 48,
+      "gold": "8",
+      "extracted": "8",
+      "correct": true,
+      "wall_s": 3.6946115493774414,
+      "completion_tokens": 54
+    },
+    {
+      "i": 49,
+      "gold": "30",
+      "extracted": "30",
+      "correct": true,
+      "wall_s": 10.355627536773682,
+      "completion_tokens": 149
+    }
+  ]
+}

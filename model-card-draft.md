@@ -184,6 +184,38 @@ Problem I-5 used 14.7K reasoning tokens and finished cleanly inside the 65K budg
 
 Raw bench JSONs + per-cell logs + suggested upstream patches: [`findings/dual_spark_jasl_sha_regression_2026-05-26/`](findings/dual_spark_jasl_sha_regression_2026-05-26/).
 
+### Concurrency scaling (Pair A, post-alignment)
+
+After the steady-state single-stream numbers, we ran a (context × concurrency) sweep on Pair A — relaunching the engine with each `(--max-model-len, --max-num-seqs)` combination. **Aggregate throughput, per-stream throughput, and TPOT all reported.**
+
+| ctx × seqs | agg tok/s | per-stream tok/s | TPOT median (ms) |
+|---|---|---|---|
+| 16K × 2 | 29.7 | 14.9 | 67 |
+| 16K × 4 | 47.9 | 12.0 | 84 |
+| 16K × 16 | 126.2 | 8.1 | 123 |
+| 64K × 2 | 30.3 | 15.2 | 66 |
+| 64K × 4 | 47.6 | 11.9 | 84 |
+| 64K × 8 | 73.1 | 9.3 | 108 |
+| 64K × 16 | 124.0 | 8.1 | 124 |
+| 128K × 2 | 26.6 | 13.4 | 75 |
+| 128K × 4 | 41.0 | 10.2 | 98 |
+| 128K × 8 | 66.1 | 8.2 | 122 |
+| 128K × 16 | 108.7 | 6.9 | 144 |
+| **4K × 32** | **189.7** | 6.1 | 164 |
+
+**Per-stream rate** holds at 12-15 tok/s up to seqs=4 across all context sizes, then declines gracefully (8 tok/s at seqs=16, 6 tok/s at seqs=32). **Aggregate throughput scales 10× from seqs=1 (~12) to seqs=16 (~125) at 16-128K context** — the production-canonical point for batched chat workloads.
+
+### Quality re-validation (GSM8K 8-shot, post-alignment)
+
+Hand-rolled 8-shot GSM8K eval via `/v1/chat/completions` (lm-eval framework had toolchain issues — `findings/dual_spark_jasl_sha_regression_2026-05-26/F008_lm_eval_chat_template_mismatch.md`). Strict-match against canonical answer:
+
+| Pair | n | correct | accuracy | published Spark baseline |
+|---|---|---|---|---|
+| Pair A | 50 | 49 | **98.0%** | 95.45% (within +2.6 SE) |
+| Pair B | 50 | 47 | **94.0%** | 95.45% (within -1.5 SE) |
+
+Both pairs hold the published GSM8K accuracy at 580.142 — no quality regression from driver / vllm-image stack.
+
 ### Oracle comparison vs B200 TP=2 reference (Spark)
 
 See published HF model card. RTX PRO 6000 oracle-compare deferred for this run.

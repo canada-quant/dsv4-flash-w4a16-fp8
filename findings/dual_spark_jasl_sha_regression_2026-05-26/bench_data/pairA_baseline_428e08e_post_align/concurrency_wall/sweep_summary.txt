@@ -1,0 +1,17 @@
+=== concurrency wall — varying seqs at fixed ctx
+ctx16384_seq2 READY boot=396s agg=29.7 median=14.9 TPOT=67.0
+ctx16384_seq4 READY boot=397s agg=47.9 median=12.0 TPOT=83.6
+ctx16384_seq8 BOOT_FAIL_rc3 boot=11s
+ctx16384_seq16 READY boot=401s agg=126.2 median=8.1 TPOT=122.9
+ctx65536_seq2 READY boot=429s agg=30.3 median=15.2 TPOT=65.9
+ctx65536_seq4 READY boot=398s agg=47.6 median=11.9 TPOT=84.1
+ctx65536_seq8 READY boot=397s agg=73.1 median=9.3 TPOT=107.7
+ctx65536_seq16 READY boot=428s agg=124.0 median=8.1 TPOT=123.6
+ctx131072_seq2 READY boot=397s agg=26.6 median=13.4 TPOT=74.7
+ctx131072_seq4 READY boot=430s agg=41.0 median=10.2 TPOT=98.4
+ctx131072_seq8 READY boot=397s agg=66.1 median=8.2 TPOT=121.8
+ctx131072_seq16 READY boot=397s agg=108.7 median=6.9 TPOT=144.0
+ctx4096_seq8 READY boot=397s 
+ctx4096_seq16 READY boot=396s 
+ctx4096_seq32 READY boot=396s agg=189.7 median=6.1 TPOT=164.4
+=== sweep done ==

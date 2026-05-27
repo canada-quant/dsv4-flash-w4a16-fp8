@@ -1,0 +1,45 @@
+[NIAH-256K]
+
+=== depth=0.1 ctx=262144 needle='The secret meeting code is QUANTA-93F6D2BFE1B1 and it will t...' ===
+  ERROR: timed out
+
+=== depth=0.5 ctx=262144 needle='The secret meeting code is QUANTA-CEA916F9C65B and it will t...' ===
+  ERROR: timed out
+
+=== depth=0.9 ctx=262144 needle='The secret meeting code is QUANTA-A2FC49C768B1 and it will t...' ===
+  ERROR: timed out
+
+wrote /home/paul/dsv4-test-2gb10/results/pairB_baseline_428e08e_post_align/extended/niah_256k.json
+{
+  "n": 3,
+  "code_found": 0,
+  "city_found": 0,
+  "both_found": 0
+}
+[NIAH-1M]
+
+=== depth=0.1 ctx=1048576 needle='The secret meeting code is QUANTA-95A822F5D6E6 and it will t...' ===
+  ERROR: HTTP Error 400: Bad Request
+
+=== depth=0.5 ctx=1048576 needle='The secret meeting code is QUANTA-DFF19D257D98 and it will t...' ===
+  ERROR: HTTP Error 400: Bad Request
+
+=== depth=0.9 ctx=1048576 needle='The secret meeting code is QUANTA-FC3D3D46EB5F and it will t...' ===
+  ERROR: HTTP Error 400: Bad Request
+
+wrote /home/paul/dsv4-test-2gb10/results/pairB_baseline_428e08e_post_align/extended/niah_1m.json
+{
+  "n": 3,
+  "code_found": 0,
+  "city_found": 0,
+  "both_found": 0
+}
+[throughput c=1 P=128K D=4K]
+[bench] base=http://100.87.54.16:8888 model=DSV4-W4A16-FP8 c=1 n=3 prompt=131072 decode=4096
+[bench] 1 warmup requests...
+[bench] running 3 measured requests at c=1...
+  request error: timed out
+  request error: HTTP Error 500: Internal Server Error
+  request error: HTTP Error 500: Internal Server Error
+[bench] ERROR: no successful requests
+[done]
