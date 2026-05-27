@@ -166,8 +166,11 @@ vllm serve canada-quant/DeepSeek-V4-Flash-W4A16-FP8 \
 |---|---|---|
 | [`vllm-project/vllm#41700`](https://github.com/vllm-project/vllm/issues/41700) | Workspace pre-reservation patch | **landed** as `jasl/vllm@1d6f5c4` |
 | [`vllm-project/vllm#41511`](https://github.com/vllm-project/vllm/issues/41511) | Marlin MoE TP scale-sharding | open — blocks TP > 2 |
-| [`vllm-project/vllm#40991`](https://github.com/vllm-project/vllm/pull/40991) → [`#41834`](https://github.com/vllm-project/vllm/pull/41834) | SM12x DSV4 base support | open (jasl) |
+| [`vllm-project/vllm#40991`](https://github.com/vllm-project/vllm/pull/40991) → [`#41834`](https://github.com/vllm-project/vllm/pull/41834) | SM12x DSV4 base support + tuned autotune configs | open (jasl); our validation [comment](https://github.com/vllm-project/vllm/pull/41834#issuecomment-4550181916) 2026-05-26 |
 | [`vllm-project/vllm#41276`](https://github.com/vllm-project/vllm/pull/41276) | compressed-tensors V4 attention path | open (kylesayrs) |
+| [`vllm-project/vllm#43722`](https://github.com/vllm-project/vllm/pull/43722) | `MarlinFP8.can_implement` refuses block-FP8 layers — fixes load on SM 12.0 RTX PRO 6000 with the freshly-pulled artifact | **open, filed 2026-05-26** |
+| [`vllm-project/vllm#43723`](https://github.com/vllm-project/vllm/pull/43723) | DSv4 `attention.py` `wo_a.weight_scale_inv` getattr fallback (companion to #43722) | **open, filed 2026-05-26** |
+| [`vllm-project/vllm#43564`](https://github.com/vllm-project/vllm/issues/43564) | Parent tracker for SM 12.0 DSv4 quant scheme dispatch — see [Phase A summary](https://github.com/vllm-project/vllm/issues/43564#issuecomment-4550184475) for the working three-patch-set | open |
 
 ## Credits
 
