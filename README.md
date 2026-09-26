@@ -33,7 +33,7 @@ These patches address the SM 12.0 W4A16 Marlin MoE concurrent-decode bug seen on
 | **this repo** (`dsv4-flash-w4a16-fp8`) | [W4A16-FP8](https://huggingface.co/canada-quant/DeepSeek-V4-Flash-W4A16-FP8) | base recipe — no MTP — broadest hardware compatibility |
 | [`canada-quant/dsv4-flash-w4a16-fp8-mtp`](https://github.com/canada-quant/dsv4-flash-w4a16-fp8-mtp) | [W4A16-FP8-MTP](https://huggingface.co/canada-quant/DeepSeek-V4-Flash-W4A16-FP8-MTP) | successor — same W4A16 recipe + BF16 MTP retained — 1.49× spec-decode speedup at bs=1 |
 | [`canada-quant/dsv4-flash-nvfp4-fp8-mtp`](https://github.com/canada-quant/dsv4-flash-nvfp4-fp8-mtp) | [NVFP4-FP8-MTP](https://huggingface.co/canada-quant/DeepSeek-V4-Flash-NVFP4-FP8-MTP) | sibling — NVFP4 routed experts (Blackwell-native) + MTP |
-| [`canada-quant/dsv4-pro-nvfp4-fp8-mtp`](https://github.com/canada-quant/dsv4-pro-nvfp4-fp8-mtp) | [Pro NVFP4-FP8-MTP](https://huggingface.co/canada-quant/DeepSeek-V4-Pro-NVFP4-FP8-MTP) | larger sibling — V4-Pro NVFP4 + MTP, B300-only |
+| `canada-quant/dsv4-pro-nvfp4-fp8-mtp` (private) | [Pro NVFP4-FP8-MTP](https://huggingface.co/canada-quant/DeepSeek-V4-Pro-NVFP4-FP8-MTP) | larger sibling — V4-Pro NVFP4 + MTP, B300-only |
 
 ## Quickstart — dual DGX Spark TP=2
 
